@@ -140,8 +140,8 @@ if __name__ == '__main__':
     env = Env()
     env.read_env()
     api_key = env.str('API_KEY')
-    api_url = env.str('API_URL')
-    template = env.str('TEMPLATE')
+    api_url = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
+    template = env.str('TEMPLATE', 'schedule.jpg')
 
     week_dates = fetch_next_week_dates(date.today())
     start_date = week_dates[0]
