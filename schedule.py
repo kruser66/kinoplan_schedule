@@ -113,6 +113,9 @@ def draw_text_schedule(template, period=None, schedule=None):
         start = start_halls[hall]
         for index, seance in enumerate(seances):
             pos_y = start + index * 80
+            seance['name'] = seance['name'].split('.')[0]
+            seance['name'] = seance['name'].split(':')[0]
+
             draw.text((180, pos_y), seance['start'], (0, 0, 0), font=font)
             if len(seance['name']) < 25:
                 draw.text((380, pos_y), seance['name'], (0, 0, 0), font=font)
@@ -147,13 +150,9 @@ if __name__ == '__main__':
     start_date = week_dates[0]
     end_date = week_dates[-1]
 
-    # draw_text_schedule(template)
-    # exit()
-
     token = get_token(api_url, api_key)
     response = get_schedule(api_url, token, start_date, end_date)
-    # pprint((response))
-    # exit()
+
     films, halls, schedule = OrderedDict(sorted(response.items())).values()
 
     serialized_films = {
