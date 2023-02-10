@@ -23,7 +23,7 @@ API_KEY='YOUR_API_KEY'
 ## Запуск модуля
 
 ```bash
-python schedule.py
+python make_schedule.py
 ```
 
 

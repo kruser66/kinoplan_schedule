@@ -106,7 +106,7 @@ def draw_text_schedule(template, period=None, schedule=None):
     end_date = dd_month(period[-1])
 
     low, high = fetch_one_two_pcice(period)
-    print(low, high)
+
     one_price = True
     if high >= 0:
         one_price = False
@@ -158,17 +158,11 @@ def draw_text_schedule(template, period=None, schedule=None):
                 pos_y = start + index * 80
                 draw.text((1600, pos_y), seance['price'], (0, 0, 0), font=font)
 
-    img.save('test.jpg')
+    img.save('./assets/weekend_price.jpg')
     img.show()
 
 
-if __name__ == '__main__':
-    env = Env()
-    env.read_env()
-    api_key = env.str('API_KEY')
-    api_url = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
-    template = env.str('TEMPLATE', 'schedule.jpg')
-
+def make():
     week_dates = fetch_next_week_dates(date.today())
     start_date = week_dates[0]
     end_date = week_dates[-1]
@@ -190,4 +184,15 @@ if __name__ == '__main__':
     formatted_schedule = formate_schedule(schedule_by_date_by_hall, serialized_films)
 
     # draw_text_schedule(template, week_dates, formatted_schedule)  # полная неделя
-    # draw_text_schedule(template, week_dates[:5], formatted_schedule)  # период 0 - четверг, 7 - среда
+    # draw_text_schedule(template, week_dates[:5], formatted_schedule)  # период 0 - четверг, 6 - среда
+    draw_text_schedule(template, week_dates[5:7], formatted_schedule)  # период 0 - четверг, 6 - среда
+
+
+if __name__ == '__main__':
+    env = Env()
+    env.read_env()
+    api_key = env.str('API_KEY')
+    api_url = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
+    template = env.str('TEMPLATE', './assets/template.jpg')
+
+    make()

@@ -1,0 +1,51 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Заполнения шаблона расписания</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container-fluid text-center">
+        <nav class="navbar bg-success-subtle">
+          <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+              <img src="{% static 'logo.svg' %}" alt="Logo" height="96" class="d-inline-block align-text-top">
+            </a>
+          </div>
+        </nav>
+        <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
+          Выберите дни недели:
+        </div>
+        <div class="center mt-2 mb-4">
+            <input type="checkbox" class="btn-check" id="btn-check1" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="btn-check1">Четверг</label>
+            <input type="checkbox" class="btn-check" id="btn-check2" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="btn-check2">Пятница</label>
+            <input type="checkbox" class="btn-check" id="btn-check3" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="btn-check3">Суббота</label>
+            <input type="checkbox" class="btn-check" id="btn-check4" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="btn-check4">Воскресенье</label>
+            <input type="checkbox" class="btn-check" id="btn-check5" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="btn-check5">Понедельник</label>
+            <input type="checkbox" class="btn-check" id="btn-check6" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="btn-check6">Вторник</label>
+            <input type="checkbox" class="btn-check" id="btn-check7" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="btn-check7">Среда</label>
+        </div>
+        <div class="center d-grid gap-2 col-4 mx-auto">
+          <button class="btn btn-success" type="submit">Заполнить шаблон</button>
+        </div>
+        <div class="invisible">
+            <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
+            </div>
+            <div class="col-4 mx-auto justify-center">
+              <img src="{% static 'weekend_price.jpg' %}" width="400" alt="schedule">
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+  </body>
+</html>
