@@ -1,6 +1,6 @@
 {% load static %}
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ru">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,26 +19,21 @@
         <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
           Выберите дни недели:
         </div>
-        <div class="center mt-2 mb-4">
-            <input type="checkbox" class="btn-check" id="btn-check1" checked autocomplete="off">
-            <label class="btn btn-outline-secondary" for="btn-check1">Четверг</label>
-            <input type="checkbox" class="btn-check" id="btn-check2" checked autocomplete="off">
-            <label class="btn btn-outline-secondary" for="btn-check2">Пятница</label>
-            <input type="checkbox" class="btn-check" id="btn-check3" checked autocomplete="off">
-            <label class="btn btn-outline-secondary" for="btn-check3">Суббота</label>
-            <input type="checkbox" class="btn-check" id="btn-check4" checked autocomplete="off">
-            <label class="btn btn-outline-secondary" for="btn-check4">Воскресенье</label>
-            <input type="checkbox" class="btn-check" id="btn-check5" checked autocomplete="off">
-            <label class="btn btn-outline-secondary" for="btn-check5">Понедельник</label>
-            <input type="checkbox" class="btn-check" id="btn-check6" checked autocomplete="off">
-            <label class="btn btn-outline-secondary" for="btn-check6">Вторник</label>
-            <input type="checkbox" class="btn-check" id="btn-check7" checked autocomplete="off">
-            <label class="btn btn-outline-secondary" for="btn-check7">Среда</label>
-        </div>
-        <div class="center d-grid gap-2 col-4 mx-auto">
-          <button class="btn btn-success" type="submit">Заполнить шаблон</button>
-        </div>
-        <div class="invisible">
+        <form action="" method="POST">
+            {% csrf_token %}
+            <div class="center mt-2 mb-4">
+                {% for day, name_day in kino_week %}
+                    <input type="checkbox" class="btn-check" id="day-{{forloop.counter0}}" name="day-{{forloop.counter0}}" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="day-{{forloop.counter0}}">{{day}}<br>({{name_day}})</label>
+                {% endfor %}
+            </div>
+            <div class="center d-grid gap-2 col-4 mx-auto">
+              <button class="btn btn-success" type="submit">
+                    Заполнить шаблон
+              </button>
+            </div>
+        </form>
+        <div class="{{visibility}}">
             <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
             </div>
             <div class="col-4 mx-auto justify-center">

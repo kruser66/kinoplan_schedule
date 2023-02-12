@@ -41,10 +41,11 @@ def get_schedule(api_url, token, date_start, date_end):
     return response.json()
 
 
-def fetch_next_week_dates(date) -> list[str]:  # format dates YYYY-MM-DD
-    delta_for_thursday = 4 - date.isoweekday()
+def fetch_next_week_dates() -> list[str]:  # format dates YYYY-MM-DD
+    today = date.today()
+    delta_for_thursday = 4 - today.isoweekday()
 
-    start_date = date + timedelta(days=delta_for_thursday)
+    start_date = today + timedelta(days=delta_for_thursday)
     week = []
     for day in range(7):
         week.append(str(start_date + timedelta(days=day)))
@@ -57,7 +58,7 @@ def dd_month(str_date):
     return f'{day} {MONTH[int(month) - 1]}'
 
 
-def fetch_one_two_pcice(period):
+def fetch_one_two_price(period):
     filters = [(date.fromisoformat(day).isoweekday() in (5, 6, 7)) for day in period]
 
     if all(filters):
@@ -71,7 +72,6 @@ def fetch_one_two_pcice(period):
         high = filters.index(True)
 
     return low, high
-
 
 
 def formate_schedule(schedule, films):
@@ -101,11 +101,11 @@ def formate_schedule(schedule, films):
     return formatted_schedule
 
 
-def draw_text_schedule(template, period=None, schedule=None):
+def draw_schedule(template, period=None, schedule=None):
     start_date = dd_month(period[0])
     end_date = dd_month(period[-1])
 
-    low, high = fetch_one_two_pcice(period)
+    low, high = fetch_one_two_price(period)
 
     one_price = True
     if high >= 0:
@@ -159,11 +159,11 @@ def draw_text_schedule(template, period=None, schedule=None):
                 draw.text((1600, pos_y), seance['price'], (0, 0, 0), font=font)
 
     img.save('./assets/weekend_price.jpg')
-    img.show()
+    # img.show()
 
 
-def make():
-    week_dates = fetch_next_week_dates(date.today())
+def show_schedule(api_url, api_key, template, selected_day):
+    week_dates = fetch_next_week_dates()
     start_date = week_dates[0]
     end_date = week_dates[-1]
 
@@ -183,9 +183,9 @@ def make():
 
     formatted_schedule = formate_schedule(schedule_by_date_by_hall, serialized_films)
 
-    # draw_text_schedule(template, week_dates, formatted_schedule)  # полная неделя
-    # draw_text_schedule(template, week_dates[:5], formatted_schedule)  # период 0 - четверг, 6 - среда
-    draw_text_schedule(template, week_dates[5:7], formatted_schedule)  # период 0 - четверг, 6 - среда
+    filtered_week = [day for index, day in enumerate(week_dates) if selected_day[index] == 1]
+
+    draw_schedule(template, filtered_week, formatted_schedule)  # период 0 - четверг, 6 - среда
 
 
 if __name__ == '__main__':
@@ -195,4 +195,4 @@ if __name__ == '__main__':
     api_url = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
     template = env.str('TEMPLATE', './assets/template.jpg')
 
-    make()
+    show_schedule(api_url, api_key, template, [1,1,1,1,1,1,1])
