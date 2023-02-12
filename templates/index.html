@@ -23,7 +23,7 @@
             {% csrf_token %}
             <div class="center mt-2 mb-4">
                 {% for day, name_day in kino_week %}
-                    <input type="checkbox" class="btn-check" id="day-{{forloop.counter0}}" name="day-{{forloop.counter0}}" autocomplete="off">
+                    <input type="checkbox" class="btn-check" id="day-{{forloop.counter0}}" name="day-{{forloop.counter0}}" checked autocomplete="off">
                     <label class="btn btn-outline-secondary" for="day-{{forloop.counter0}}">{{day}}<br>({{name_day}})</label>
                 {% endfor %}
             </div>
@@ -37,7 +37,7 @@
             <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
             </div>
             <div class="col-4 mx-auto justify-center">
-              <img src="{% static 'weekend_price.jpg' %}" width="400" alt="schedule">
+              <img src="/media/weekend_price.jpg" width="400" alt="schedule">
             </div>
         </div>
     </div>

@@ -19,7 +19,8 @@ def index(request):
         context['visibility'] = 'visible'
         for day in range(7):
             week.append(1 if request.POST.getlist(f'day-{day}') else 0)
-
+        print(week)
         show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week)
+
 
     return render(request, 'index.html', context=context)

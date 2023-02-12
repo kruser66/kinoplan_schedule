@@ -1,6 +1,8 @@
 venv/
 .env
 .idea
-assets/weekend_price.jpg
+weekend_price.jpg
+medis/
+
 *.sqlite3
 *__pycache__

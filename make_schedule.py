@@ -102,6 +102,7 @@ def formate_schedule(schedule, films):
 
 
 def draw_schedule(template, period=None, schedule=None):
+    print(period)
     start_date = dd_month(period[0])
     end_date = dd_month(period[-1])
 
@@ -158,8 +159,9 @@ def draw_schedule(template, period=None, schedule=None):
                 pos_y = start + index * 80
                 draw.text((1600, pos_y), seance['price'], (0, 0, 0), font=font)
 
-    img.save('./assets/weekend_price.jpg')
+    img.save('./media/weekend_price.jpg')
     # img.show()
+
 
 
 def show_schedule(api_url, api_key, template, selected_day):
@@ -195,4 +197,4 @@ if __name__ == '__main__':
     api_url = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
     template = env.str('TEMPLATE', './assets/template.jpg')
 
-    show_schedule(api_url, api_key, template, [1,1,1,1,1,1,1])
+    show_schedule(api_url, api_key, template, [0,0,1,1,1,1,1])
