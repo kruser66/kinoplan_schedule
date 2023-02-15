@@ -160,7 +160,7 @@ def draw_schedule(template, period=None, schedule=None):
                 pos_y = start + index * 80
                 draw.text((1600, pos_y), seance['price'], (0, 0, 0), font=font)
 
-    img.save('weekend_price.jpg')
+    img.save(os.path.join(BASE_DIR, 'static', 'weekend_price.jpg'))
     # img.show()
 
 
