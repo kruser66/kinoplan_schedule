@@ -136,7 +136,10 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
     for hall, seances in schedule[period[low]].items():
         start = start_halls[hall]
         for index, seance in enumerate(seances):
-            pos_y = start + index * 80
+            if len(seance) < 9:
+                pos_y = start + index * 80
+            else:
+                pos_y = start + index * 70
             seance['name'] = seance['name'].split('.')[0]
             seance['name'] = seance['name'].split(':')[0]
 
