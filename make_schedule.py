@@ -109,9 +109,8 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
 
     low, high = fetch_one_two_price(period)
 
-    one_price = True
-    if high >= 0:
-        one_price = False
+
+    one_price = False if high >= 0 else True
 
     if fixprice:
         one_price = True
