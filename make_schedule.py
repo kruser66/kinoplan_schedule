@@ -115,11 +115,11 @@ def draw_schedule(template, period=None, schedule=None):
 
     img = Image.open(template)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("/static/tahomabd.ttf", 48)
-    font_small = ImageFont.truetype("/static/tahomabd.ttf", 38)
-    font_long_25 = ImageFont.truetype("/static/tahomabd.ttf", 36)
-    font_long_35 = ImageFont.truetype("/static/tahomabd.ttf", 30)
-    font_text = ImageFont.truetype("/static/tahoma.ttf", 36)
+    font = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 48)
+    font_small = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 38)
+    font_long_25 = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 36)
+    font_long_35 = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 30)
+    font_text = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahoma.ttf"), 36)
 
     draw.text((1280, 180), start_date, (0, 0, 0), font=font)
     draw.text((1280, 280), end_date, (0, 0, 0), font=font)
