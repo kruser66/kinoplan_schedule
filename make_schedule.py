@@ -1,8 +1,9 @@
+import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
 from environs import Env
 from datetime import datetime, date, timedelta
-from pprint import pprint
+from django.conf import settings
 from collections import OrderedDict
 
 
@@ -114,11 +115,11 @@ def draw_schedule(template, period=None, schedule=None):
 
     img = Image.open(template)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("tahomabd.ttf", 48)
-    font_small = ImageFont.truetype("tahomabd.ttf", 38)
-    font_long_25 = ImageFont.truetype("tahomabd.ttf", 36)
-    font_long_35 = ImageFont.truetype("tahomabd.ttf", 30)
-    font_text = ImageFont.truetype("tahoma.ttf", 36)
+    font = ImageFont.truetype("/static/tahomabd.ttf", 48)
+    font_small = ImageFont.truetype("/static/tahomabd.ttf", 38)
+    font_long_25 = ImageFont.truetype("/static/tahomabd.ttf", 36)
+    font_long_35 = ImageFont.truetype("/static/tahomabd.ttf", 30)
+    font_text = ImageFont.truetype("/static/tahoma.ttf", 36)
 
     draw.text((1280, 180), start_date, (0, 0, 0), font=font)
     draw.text((1280, 280), end_date, (0, 0, 0), font=font)
@@ -159,8 +160,8 @@ def draw_schedule(template, period=None, schedule=None):
                 pos_y = start + index * 80
                 draw.text((1600, pos_y), seance['price'], (0, 0, 0), font=font)
 
-    img.save('./media/weekend_price.jpg')
-    # img.show()
+    img.save('weekend_price.jpg')
+    img.show()
 
 
 
@@ -168,6 +169,7 @@ def show_schedule(api_url, api_key, template, selected_day):
     week_dates = fetch_next_week_dates()
     start_date = week_dates[0]
     end_date = week_dates[-1]
+    print(week_dates)
 
     token = get_token(api_url, api_key)
     response = get_schedule(api_url, token, start_date, end_date)

@@ -122,6 +122,8 @@ USE_TZ = True
 
 STATIC_URL = env.str('STATIC_URL', '/static/')
 STATIC_ROOT = os.path.join(BASE_DIR, env.str('STATIC_ROOT', 'static'))
+MEDIA_URL = env.str('STATIC_URL', '/media/')
+MEDIA_ROOT = os.path.join(BASE_DIR, env.str('STATIC_ROOT', 'media'))
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'assets'), ]
 
 # Default primary key field type
@@ -131,4 +133,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 API_KEY = env.str('API_KEY')
 API_URL = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
-TEMPLATE = env.str('TEMPLATE', './assets/template.jpg')
+TEMPLATE = env.str('TEMPLATE', os.path.join(BASE_DIR, 'static', 'template.jpg'))

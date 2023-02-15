@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render
 from django.conf import settings
 from make_schedule import fetch_next_week_dates, show_schedule
@@ -19,7 +20,7 @@ def index(request):
         context['visibility'] = 'visible'
         for day in range(7):
             week.append(1 if request.POST.getlist(f'day-{day}') else 0)
-        print(week)
+
         show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week)
 
 
