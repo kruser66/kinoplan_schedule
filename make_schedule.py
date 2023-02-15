@@ -14,6 +14,7 @@ WEEKDAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
 UTC = 5
 BASE_DIR = settings.BASE_DIR
 
+
 def get_token(api_url, api_key):
     url = api_url + '/auth/token'
     params = {
@@ -102,8 +103,7 @@ def formate_schedule(schedule, films):
     return formatted_schedule
 
 
-def draw_schedule(template, period=None, schedule=None):
-    print(period)
+def draw_schedule(template, period=None, schedule=None, fixprice=False):
     start_date = dd_month(period[0])
     end_date = dd_month(period[-1])
 
@@ -113,13 +113,16 @@ def draw_schedule(template, period=None, schedule=None):
     if high >= 0:
         one_price = False
 
+    if fixprice:
+        one_price = True
+
     img = Image.open(template)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 48)
-    font_small = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 38)
-    font_long_25 = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 36)
-    font_long_35 = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahomabd.ttf"), 30)
-    font_text = ImageFont.truetype(os.path.join(BASE_DIR, 'static' ,"tahoma.ttf"), 36)
+    font = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 48)
+    font_small = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 38)
+    font_long_25 = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 36)
+    font_long_35 = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 30)
+    font_text = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahoma.ttf"), 36)
 
     draw.text((1280, 180), start_date, (0, 0, 0), font=font)
     draw.text((1280, 280), end_date, (0, 0, 0), font=font)
@@ -161,15 +164,12 @@ def draw_schedule(template, period=None, schedule=None):
                 draw.text((1600, pos_y), seance['price'], (0, 0, 0), font=font)
 
     img.save(os.path.join(BASE_DIR, 'static', 'weekend_price.jpg'))
-    # img.show()
 
 
-
-def show_schedule(api_url, api_key, template, selected_day):
+def show_schedule(api_url, api_key, template, selected_day, fixprice=False):
     week_dates = fetch_next_week_dates()
     start_date = week_dates[0]
     end_date = week_dates[-1]
-    print(week_dates)
 
     token = get_token(api_url, api_key)
     response = get_schedule(api_url, token, start_date, end_date)
@@ -189,7 +189,7 @@ def show_schedule(api_url, api_key, template, selected_day):
 
     filtered_week = [day for index, day in enumerate(week_dates) if selected_day[index] == 1]
 
-    draw_schedule(template, filtered_week, formatted_schedule)  # период 0 - четверг, 6 - среда
+    draw_schedule(template, filtered_week, formatted_schedule, fixprice)  # период 0 - четверг, 6 - среда
 
 
 if __name__ == '__main__':
@@ -199,4 +199,4 @@ if __name__ == '__main__':
     api_url = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
     template = env.str('TEMPLATE', './assets/template.jpg')
 
-    show_schedule(api_url, api_key, template, [0,0,1,1,1,1,1])
+    show_schedule(api_url, api_key, template, [0, 0, 1, 1, 1, 1, 1])

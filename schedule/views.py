@@ -21,7 +21,8 @@ def index(request):
         for day in range(7):
             week.append(1 if request.POST.getlist(f'day-{day}') else 0)
 
-        show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week)
+        fixprice = True if request.POST.getlist('fixprice') else False
 
+        show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week, fixprice)
 
     return render(request, 'index.html', context=context)
