@@ -12,7 +12,7 @@ MONTH = ['ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ',
          'ОКТЯБРЯ', 'НОЯБРЯ', 'ДЕКАБРЯ']
 WEEKDAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
 UTC = 5
-
+BASE_DIR = settings.BASE_DIR
 
 def get_token(api_url, api_key):
     url = api_url + '/auth/token'
@@ -161,7 +161,7 @@ def draw_schedule(template, period=None, schedule=None):
                 draw.text((1600, pos_y), seance['price'], (0, 0, 0), font=font)
 
     img.save('weekend_price.jpg')
-    img.show()
+    # img.show()
 
 
 
