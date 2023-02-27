@@ -179,7 +179,7 @@ def show_schedule(api_url, api_key, template, selected_day, fixprice=False):
     films, halls, schedule = OrderedDict(sorted(response.items())).values()
 
     serialized_films = {
-        film['kinoplan_id']: [film['name'], film['rate']] for film in films
+        film['kinoplan_id']: [film['marketing_title'] if film.get('marketing_title') else film['name'], film['rate']] for film in films
     }
 
     schedule_by_date_by_hall = {day: {
