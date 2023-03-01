@@ -6,6 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from schedule.models import Schedule
 from make_schedule import fetch_next_week_dates, show_schedule
+from django.views.decorators.cache import cache_control
 
 KINO_WEEK = ['ЧТ', 'ПТ', 'СБ', 'ВС', 'ПН', 'ВТ', 'СР']
 
@@ -16,7 +17,7 @@ def index(request):
 
     return HttpResponseRedirect(reverse('week_schedule', args=(year, week,)))
 
-
+@cache_control(max_age=0, no_cache=True, no_store=True, must_revalidate=True)
 def week_schedule(request, year, week):
     week_dates = fetch_next_week_dates(year, week)
     kino_week = list(zip(['-'.join(day.split('-')[::-1]) for day in week_dates], KINO_WEEK))
