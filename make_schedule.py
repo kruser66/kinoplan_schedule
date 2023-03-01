@@ -3,7 +3,7 @@ import requests
 from PIL import Image, ImageDraw, ImageFont
 from environs import Env
 from datetime import datetime, date, timedelta
-# from django.conf import settings
+from django.conf import settings
 from collections import OrderedDict
 from io import BytesIO
 from django.core.files.base import ContentFile
@@ -14,7 +14,7 @@ MONTH = ['ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ',
          'ОКТЯБРЯ', 'НОЯБРЯ', 'ДЕКАБРЯ']
 WEEKDAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
 UTC = 5
-# BASE_DIR = settings.BASE_DIR
+BASE_DIR = settings.BASE_DIR
 
 
 def get_token(api_url, api_key):
@@ -123,11 +123,11 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
 
     img = Image.open(template)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype(os.path.join('static', "tahomabd.ttf"), 48)
-    font_small = ImageFont.truetype(os.path.join('static', "tahomabd.ttf"), 38)
-    font_long_25 = ImageFont.truetype(os.path.join('static', "tahomabd.ttf"), 36)
-    font_long_35 = ImageFont.truetype(os.path.join('static', "tahomabd.ttf"), 30)
-    font_text = ImageFont.truetype(os.path.join('static', "tahoma.ttf"), 36)
+    font = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 48)
+    font_small = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 38)
+    font_long_25 = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 36)
+    font_long_35 = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 30)
+    font_text = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahoma.ttf"), 36)
 
     draw.text((1280, 180), start_date, (0, 0, 0), font=font)
     draw.text((1280, 280), end_date, (0, 0, 0), font=font)
