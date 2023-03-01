@@ -178,8 +178,8 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
 
 
 
-def show_schedule(api_url, api_key, template, selected_day, fixprice=False):
-    week_dates = fetch_next_week_dates()
+def show_schedule(api_url, api_key, template, year, week, selected_day, fixprice=False):
+    week_dates = fetch_next_week_dates(year, week)
     start_date = week_dates[0]
     end_date = week_dates[-1]
 

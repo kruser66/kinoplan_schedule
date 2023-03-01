@@ -38,7 +38,15 @@ def week_schedule(request, year, week):
 
         fix_price = True if request.POST.getlist('fix_price') else False
 
-        content_file = show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week_select, fix_price)
+        content_file = show_schedule(
+            settings.API_URL,
+            settings.API_KEY,
+            settings.TEMPLATE,
+            year,
+            week,
+            week_select,
+            fix_price
+        )
 
         new_schedule, created = Schedule.objects.update_or_create(year=year, week=week)
 
