@@ -1,28 +1,49 @@
-import json
-from django.shortcuts import render
+from datetime import date
 from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse
+from schedule.models import Schedule
 from make_schedule import fetch_next_week_dates, show_schedule
 
 KINO_WEEK = ['ЧТ', 'ПТ', 'СБ', 'ВС', 'ПН', 'ВТ', 'СР']
 
 
 def index(request):
-    week_dates = fetch_next_week_dates()
+    year = date.today().year
+    week = date.today().isocalendar().week
+
+    return HttpResponseRedirect(reverse('week_schedule', args=(year, week,)))
+
+
+def week_schedule(request, year, week):
+    week_dates = fetch_next_week_dates(year, week)
     kino_week = list(zip(['-'.join(day.split('-')[::-1]) for day in week_dates], KINO_WEEK))
 
     context = {
         'kino_week': kino_week,
-        'visibility': 'invisible'
+        'visibility': 'invisible',
+        'year': year,
+        'week': week
     }
+    schedule = Schedule.objects.filter(year=year, week=week)
+    if schedule:
+        context.update(image=schedule[0].image, visibility='visible')
 
     if request.method == 'POST':
-        week = []
-        context['visibility'] = 'visible'
+        week_select = []
         for day in range(7):
-            week.append(1 if request.POST.getlist(f'day-{day}') else 0)
+            week_select.append(1 if request.POST.getlist(f'day-{day}') else 0)
 
-        fixprice = True if request.POST.getlist('fixprice') else False
+        fix_price = True if request.POST.getlist('fix_price') else False
 
-        show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week, fixprice)
+        content_file = show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week_select, fix_price)
+
+        new_schedule, _ = Schedule.objects.update_or_create(year=year, week=week)
+        new_schedule.image.save(
+            f'schedule_{year}_{week}.jpg',
+            content_file
+        )
+        context.update(image=new_schedule.image, visibility='visible')
 
     return render(request, 'index.html', context=context)

@@ -27,8 +27,8 @@
                     <label class="btn btn-outline-secondary" for="day-{{forloop.counter0}}">{{day}}<br>({{name_day}})</label>
                 {% endfor %}
             </div>
-                <div class="invisible center mt-2 mb-4">
-                  <input class="form-check-input text-secondary" type="checkbox" value="" id="flexCheckDefault" name="fixprice">
+                <div class="visible center mt-2 mb-4">
+                  <input class="form-check-input text-secondary" type="checkbox" value="" id="flexCheckDefault" name="fix_price">
                   <label class="form-check-label text-secondary" for="flexCheckDefault">
                     Единая цена на период
                   </label>
@@ -43,7 +43,7 @@
             <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
             </div>
             <div class="col-4 mx-auto justify-center">
-              <img src="{% static 'weekend_price.jpg' %}" width="400" alt="schedule">
+              <img src="{{ image.url }}" width="400" alt="schedule">
             </div>
         </div>
     </div>
