@@ -1,3 +1,4 @@
+import os
 from datetime import date
 from django.conf import settings
 from django.http import HttpResponseRedirect
@@ -39,7 +40,11 @@ def week_schedule(request, year, week):
 
         content_file = show_schedule(settings.API_URL, settings.API_KEY, settings.TEMPLATE, week_select, fix_price)
 
-        new_schedule, _ = Schedule.objects.update_or_create(year=year, week=week)
+        new_schedule, created = Schedule.objects.update_or_create(year=year, week=week)
+
+        if not created:
+            os.remove(os.path.join(settings.MEDIA_ROOT, f'schedule_{year}_{week}.jpg'))
+
         new_schedule.image.save(
             f'schedule_{year}_{week}.jpg',
             content_file
