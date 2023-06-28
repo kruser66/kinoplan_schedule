@@ -2,7 +2,7 @@ import os
 import requests
 from PIL import Image, ImageDraw, ImageFont
 from environs import Env
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 from django.conf import settings
 from collections import OrderedDict
 from io import BytesIO
@@ -45,24 +45,24 @@ def get_schedule(api_url, token, date_start, date_end):
     return response.json()
 
 
-def fetch_next_week_dates(year=None, week=None) -> list[str]:  # format dates YYYY-MM-DD
-    if not year and not week:
-        today = date.today()
-    else:
-        today = date(year, 1, 1) + timedelta(days=week*7)
+def fetch_next_week_dates(year: int, week: int, isoformat=False) -> list[str]:
+    '''Возвращает список дней кинонедели, начиная с четверга в формате DD-MM-YYYY
+    или YYYY-MM-DD если isoformat=True'''
+    
+    format_date = '%Y-%m-%d' if isoformat else '%d-%m-%Y'
+    start_weekday = date(year, 1, 1) + timedelta(days=week*7)
 
-    delta_for_thursday = 4 - today.isoweekday()
-
-    start_date = today + timedelta(days=delta_for_thursday)
-    week_days = []
-    for day in range(7):
-        week_days.append(str(start_date + timedelta(days=day)))
+    start_weekday += timedelta(days=(4 - start_weekday.isoweekday()))
+    
+    week_days = [
+        (start_weekday + timedelta(days=day)).strftime(format_date) for day in range(7)
+    ]
 
     return week_days
 
 
-def dd_month(str_date):
-    _, month, day = str_date.split('-')
+def dd_month(date: str):
+    _, month, day = date.split('-')
     return f'{day} {MONTH[int(month) - 1]}'
 
 
@@ -110,11 +110,11 @@ def formate_schedule(schedule, films):
 
 
 def draw_schedule(template, period=None, schedule=None, fixprice=False):
+
     start_date = dd_month(period[0])
     end_date = dd_month(period[-1])
 
     low, high = fetch_one_two_price(period)
-
 
     one_price = False if high >= 0 else True
 
@@ -179,7 +179,7 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
 
 
 def show_schedule(api_url, api_key, template, year, week, selected_day, fixprice=False):
-    week_dates = fetch_next_week_dates(year, week)
+    week_dates = fetch_next_week_dates(year, week, isoformat=True)
     start_date = week_dates[0]
     end_date = week_dates[-1]
 
