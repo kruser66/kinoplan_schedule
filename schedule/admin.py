@@ -1,7 +1,13 @@
 from django.contrib import admin
-from schedule.models import Schedule
+from schedule.models import Schedule, ScheduleImage
 
-# Register your models here.
+
+class ScheduleImageInline(admin.TabularInline):
+    model = ScheduleImage
+    extra = 0
+
 @admin.register(Schedule)
 class ScheduleAdmin(admin.ModelAdmin):
-    pass
+    inlines = [
+        ScheduleImageInline
+    ]

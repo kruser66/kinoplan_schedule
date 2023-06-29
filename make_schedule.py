@@ -1,5 +1,7 @@
 import os
 import requests
+import services.config as config
+from services.api import get_week_schedule
 from PIL import Image, ImageDraw, ImageFont
 from environs import Env
 from datetime import date, timedelta
@@ -7,6 +9,7 @@ from django.conf import settings
 from collections import OrderedDict
 from io import BytesIO
 from django.core.files.base import ContentFile
+from pprint import pprint
 
 
 MONTH = ['ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ',
@@ -123,11 +126,11 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
 
     img = Image.open(template)
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 48)
-    font_small = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 38)
-    font_long_25 = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 36)
-    font_long_35 = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahomabd.ttf"), 30)
-    font_text = ImageFont.truetype(os.path.join(BASE_DIR, 'static', "tahoma.ttf"), 36)
+    font = ImageFont.truetype(config.FONT_BOLD, 48)
+    font_small = ImageFont.truetype(config.FONT_BOLD, 38)
+    font_long_25 = ImageFont.truetype(config.FONT_BOLD, 36)
+    font_long_35 = ImageFont.truetype(config.FONT_BOLD, 30)
+    font_text = ImageFont.truetype(config.FONT, 36)
 
     draw.text((1280, 180), start_date, (0, 0, 0), font=font)
     draw.text((1280, 280), end_date, (0, 0, 0), font=font)
@@ -177,14 +180,12 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
     return ContentFile(buffer.getvalue())
 
 
-
-def show_schedule(api_url, api_key, template, year, week, selected_day, fixprice=False):
+def show_schedule(template, year, week, selected_day, fixprice=False):
     week_dates = fetch_next_week_dates(year, week, isoformat=True)
     start_date = week_dates[0]
     end_date = week_dates[-1]
 
-    token = get_token(api_url, api_key)
-    response = get_schedule(api_url, token, start_date, end_date)
+    response = get_week_schedule(start_date, end_date)  
 
     films, halls, schedule = OrderedDict(sorted(response.items())).values()
 
