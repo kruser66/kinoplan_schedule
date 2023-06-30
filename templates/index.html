@@ -17,7 +17,7 @@
           </div>
         </nav>
         <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
-          Выберите дни недели:
+          Оставьте включенными нужные дни недели:
         </div>
         <form action="" method="POST">
             {% csrf_token %}
@@ -41,31 +41,17 @@
               </button>
             </div>
         </form>
-        <br><br>
-        {% comment %} <div class="{{visibility}}">
-            <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
-            </div>
-            <div class="col-4 mx-auto justify-center">
-              <img src="{{ image.url }}" width="400" alt="schedule">
-            </div>
-        </div> {% endcomment %}
+        <br>
+        <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
+          Заполненные варианты расписания:
+        </div>
         {% if images %}
-          <div id="carouselExampleIndicators" class="carousel carousel-dark">
-            <div class="carousel-inner middle">
-              {% for image in images %}
-                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <img src="{{ image.image.url }}" class="w-25" alt="Расписание">
+          <div class="row mb-4 justify-content-center">
+            {% for image in images %}
+                <div class="col-lg-3 col-md-4 col-6 text-center">
+                  <img src="{{ image.image.url }}" class="w-100" alt="Расписание">
                 </div>           
-              {% endfor %}
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Предыдущий</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Следующий</span>
-            </button>
+            {% endfor %}
           </div>
         {% endif %}
       </div>

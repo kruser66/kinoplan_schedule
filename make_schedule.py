@@ -9,7 +9,6 @@ from django.conf import settings
 from collections import OrderedDict
 from io import BytesIO
 from django.core.files.base import ContentFile
-from pprint import pprint
 
 
 MONTH = ['ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ',
@@ -17,35 +16,6 @@ MONTH = ['ЯНВАРЯ', 'ФЕВРАЛЯ', 'МАРТА', 'АПРЕЛЯ',
          'ОКТЯБРЯ', 'НОЯБРЯ', 'ДЕКАБРЯ']
 WEEKDAYS = ['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']
 UTC = 5
-BASE_DIR = settings.BASE_DIR
-
-
-def get_token(api_url, api_key):
-    url = api_url + '/auth/token'
-    params = {
-        'api_key': api_key,
-    }
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-
-    return response.json()['request_token']
-
-
-def get_schedule(api_url, token, date_start, date_end):
-    url = api_url + '/schedule'
-
-    params = {
-        'dateStart': date_start,  # YYYY-MM-DD
-        'dateEnd': date_end,  # YYYY-MM-DD
-    }
-
-    headers = {
-        'REQUEST-TOKEN': token,
-    }
-    response = requests.get(url, headers=headers, params=params)
-    response.raise_for_status()
-
-    return response.json()
 
 
 def fetch_next_week_dates(year: int, week: int, isoformat=False) -> list[str]:
@@ -70,6 +40,8 @@ def dd_month(date: str):
 
 
 def fetch_one_two_price(period):
+    '''Определяет один или два вида цены использовать в шаблоне'''
+    
     filters = [(date.fromisoformat(day).isoweekday() in (5, 6, 7)) for day in period]
 
     if all(filters):
@@ -112,7 +84,8 @@ def formate_schedule(schedule, films):
     return formatted_schedule
 
 
-def draw_schedule(template, period=None, schedule=None, fixprice=False):
+def draw_schedule(period=None, schedule=None, fixprice=False):
+    '''Заполняет шаблон рапсианием, на выходе файл jpg'''
 
     start_date = dd_month(period[0])
     end_date = dd_month(period[-1])
@@ -124,7 +97,7 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
     if fixprice:
         one_price = True
 
-    img = Image.open(template)
+    img = Image.open(config.TEMPLATE_IMAGE)
     draw = ImageDraw.Draw(img)
     font = ImageFont.truetype(config.FONT_BOLD, 48)
     font_small = ImageFont.truetype(config.FONT_BOLD, 38)
@@ -177,10 +150,10 @@ def draw_schedule(template, period=None, schedule=None, fixprice=False):
     buffer = BytesIO()
     img.save(fp=buffer, format='JPEG')
 
-    return ContentFile(buffer.getvalue())
+    return ContentFile(buffer.getvalue(), f'{period[0]}_{period[-1]}.jpg')
 
 
-def show_schedule(template, year, week, selected_day, fixprice=False):
+def show_schedule(year, week, selected_day, fixprice=False):
     week_dates = fetch_next_week_dates(year, week, isoformat=True)
     start_date = week_dates[0]
     end_date = week_dates[-1]
@@ -202,7 +175,7 @@ def show_schedule(template, year, week, selected_day, fixprice=False):
 
     filtered_week = [day for index, day in enumerate(week_dates) if selected_day[index] == 1]
 
-    return draw_schedule(template, filtered_week, formatted_schedule, fixprice)  # период 0 - четверг, 6 - среда
+    return draw_schedule(filtered_week, formatted_schedule, fixprice)  # период 0 - четверг, 6 - среда
 
 
 if __name__ == '__main__':

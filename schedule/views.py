@@ -4,9 +4,11 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.files.storage import default_storage
+
 from schedule.models import Schedule, ScheduleImage
 from make_schedule import fetch_next_week_dates, show_schedule, fetch_one_two_price
-from django.views.decorators.cache import cache_control
+
 
 KINO_WEEK = ['ЧТ', 'ПТ', 'СБ', 'ВС', 'ПН', 'ВТ', 'СР']
 
@@ -19,7 +21,6 @@ def index(request):
     return HttpResponseRedirect(reverse('week_schedule', args=(year, week,)))
 
 
-@cache_control(max_age=0, no_cache=True, no_store=True, must_revalidate=True)
 def week_schedule(request, year, week):
     week_dates = fetch_next_week_dates(year, week)
     kino_week = list(zip(week_dates, KINO_WEEK))
@@ -34,18 +35,17 @@ def week_schedule(request, year, week):
         one_price = True if request.POST.getlist('fix_price') else False
 
         content_file = show_schedule(
-            settings.TEMPLATE,
             year,
             week,
             selection,
             one_price
         )
 
-        new_schedule_image, created = ScheduleImage.objects.update_or_create(title='schedule', schedule=schedule)
-        new_schedule_image.image.save(
-            f'schedule_{year}_{week}_{new_schedule_image.id}.jpg',
-            content_file
-        )
+        if default_storage.exists(content_file.name):
+            default_storage.delete(content_file.name)
+        
+        title = content_file.name.split('.')[0]
+        ScheduleImage.objects.update_or_create(title=title, schedule=schedule, defaults={'image': content_file})
 
     context = {
         'kino_week': kino_week,
