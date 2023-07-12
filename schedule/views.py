@@ -56,3 +56,17 @@ def week_schedule(request, year, week):
     }
     
     return render(request, 'index.html', context=context)
+
+
+def delete_image(request, pk):
+    
+    try:
+        image_for_deletion = ScheduleImage.objects.get(id=pk)
+        filename = image_for_deletion.title + '.jpg'
+        if default_storage.exists(filename):
+            default_storage.delete(filename)
+        image_for_deletion.delete()
+    except:
+        pass
+    
+    return HttpResponseRedirect(request.GET['next'])

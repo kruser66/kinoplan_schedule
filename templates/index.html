@@ -48,9 +48,12 @@
         {% if images %}
           <div class="row mb-4 justify-content-center">
             {% for image in images %}
-                <div class="col-lg-3 col-md-4 col-6 text-center">
-                  <img src="{{ image.image.url }}" class="w-100" alt="Расписание">
-                </div>           
+              <div class="card" style="width: 18rem;">
+                <img src="{{ image.image.url }}" class="card-img-top" alt="Расписание на {{image.title}}">
+                <div class="card-body">
+                  <a href="{% url 'delete_image' pk=image.id %}?next={{request.get_full_path|urlencode}}" class="btn btn-danger">Удалить</a>
+                </div>
+              </div>
             {% endfor %}
           </div>
         {% endif %}
