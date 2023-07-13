@@ -1,7 +1,7 @@
 import os
 import requests
 import services.config as config
-from services.api import get_week_schedule
+from services.api import get_week_schedule, get_marketing_title, get_kinoplan_token
 from PIL import Image, ImageDraw, ImageFont
 from environs import Env
 from datetime import date, timedelta
@@ -162,6 +162,11 @@ def show_schedule(year, week, selected_day, fixprice=False):
 
     films, halls, schedule = OrderedDict(sorted(response.items())).values()
 
+    token = get_kinoplan_token()
+    
+    for film in films:
+        film.update({'marketing_title': get_marketing_title(token, film['kinoplan_id'])})
+    
     serialized_films = {
         film['kinoplan_id']: [film['marketing_title'] if film.get('marketing_title') else film['name'], film['rate']] for film in films
     }
