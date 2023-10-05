@@ -1,11 +1,8 @@
-import os
-import requests
 import services.config as config
 from services.api import get_week_schedule, get_marketing_title, get_kinoplan_token
 from PIL import Image, ImageDraw, ImageFont
 from environs import Env
 from datetime import date, timedelta
-from django.conf import settings
 from collections import OrderedDict
 from io import BytesIO
 from django.core.files.base import ContentFile
@@ -21,12 +18,12 @@ UTC = 5
 def fetch_next_week_dates(year: int, week: int, isoformat=False) -> list[str]:
     '''Возвращает список дней кинонедели, начиная с четверга в формате DD-MM-YYYY
     или YYYY-MM-DD если isoformat=True'''
-    
+
     format_date = '%Y-%m-%d' if isoformat else '%d-%m-%Y'
     start_weekday = date(year, 1, 1) + timedelta(days=week*7)
 
     start_weekday += timedelta(days=(4 - start_weekday.isoweekday()))
-    
+
     week_days = [
         (start_weekday + timedelta(days=day)).strftime(format_date) for day in range(7)
     ]
@@ -41,7 +38,7 @@ def dd_month(date: str):
 
 def fetch_one_two_price(period):
     '''Определяет один или два вида цены использовать в шаблоне'''
-    
+
     filters = [(date.fromisoformat(day).isoweekday() in (5, 6, 7)) for day in period]
 
     if all(filters):
@@ -64,6 +61,8 @@ def formate_schedule(schedule, films):
         for hall, schedule_hall in schedule_day.items():
             seances = []
             for seance in schedule_hall:
+                if not seance['film_id']:  # Пустой сеанс - пропускаем
+                    continue
                 hh, mm = seance['start'].split(':')
                 seance_start = f'{(int(hh) + UTC):02}:{mm}'
                 name, rate = films[seance['film_id']]
@@ -158,17 +157,20 @@ def show_schedule(year, week, selected_day, fixprice=False):
     start_date = week_dates[0]
     end_date = week_dates[-1]
 
-    response = get_week_schedule(start_date, end_date)  
+    response = get_week_schedule(start_date, end_date)
 
     films, halls, schedule = OrderedDict(sorted(response.items())).values()
 
     token = get_kinoplan_token()
-    
+
     for film in films:
         film.update({'marketing_title': get_marketing_title(token, film['kinoplan_id'])})
-    
+
     serialized_films = {
-        film['kinoplan_id']: [film['marketing_title'] if film.get('marketing_title') else film['name'], film['rate']] for film in films
+        film['kinoplan_id']: [
+            film['marketing_title'] if film.get('marketing_title') else film['name'],
+            film['rate']
+        ] for film in films
     }
 
     schedule_by_date_by_hall = {day: {
