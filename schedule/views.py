@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.core.files.storage import default_storage
+from django.views.decorators.csrf import csrf_exempt
 
 from schedule.models import Schedule, ScheduleImage
 from make_schedule import fetch_next_week_dates, show_schedule, fetch_one_two_price
@@ -21,6 +22,7 @@ def index(request):
     return HttpResponseRedirect(reverse('week_schedule', args=(year, week,)))
 
 
+@csrf_exempt
 def week_schedule(request, year, week):
     week_dates = fetch_next_week_dates(year, week)
     kino_week = list(zip(week_dates, KINO_WEEK))
@@ -57,7 +59,7 @@ def week_schedule(request, year, week):
     
     return render(request, 'index.html', context=context)
 
-
+@csrf_exempt
 def delete_image(request, pk):
     
     try:
