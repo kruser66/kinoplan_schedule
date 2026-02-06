@@ -22,12 +22,20 @@
         <form action="" method="POST">
             {% csrf_token %}
             <div class="center mt-2 mb-4">
-                <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'-1' %}" role="button"> <<< </a>
+                {% if week > 1 %}
+                  <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'-1' %}" role="button"> <<< </a>
+                {% else %}
+                  <a class="btn btn-link" href="{% url 'week_schedule' year|add:'-1' 52 %}" role="button"> <<< </a>
+                {% endif %}
                 {% for day, name_day in kino_week %}
                     <input type="checkbox" class="btn-check" id="day-{{forloop.counter0}}" name="day-{{forloop.counter0}}" checked autocomplete="off">
                     <label class="btn btn-outline-secondary" for="day-{{forloop.counter0}}">{{day}}<br>({{name_day}})</label>
                 {% endfor %}
-                <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'1' %}" role="button"> >>> </a>
+                {% if week < 52 %}
+                  <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'1' %}" role="button"> >>> </a>
+                {% else %}
+                  <a class="btn btn-link" href="{% url 'week_schedule' year|add:'1' 0 %}" role="button"> >>> </a>
+                {% endif %}
             </div>
                 <div class="visible center mt-2 mb-4">
                   <input class="form-check-input text-secondary" type="checkbox" value="" id="flexCheckDefault" name="fix_price">
