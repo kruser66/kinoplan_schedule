@@ -6,6 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.core.files.storage import default_storage
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 
 from schedule.models import Schedule, ScheduleImage
 from make_schedule import fetch_next_week_dates, show_schedule, fetch_one_two_price
@@ -14,6 +15,7 @@ from make_schedule import fetch_next_week_dates, show_schedule, fetch_one_two_pr
 KINO_WEEK = ['ЧТ', 'ПТ', 'СБ', 'ВС', 'ПН', 'ВТ', 'СР']
 
 
+@login_required
 def index(request):
     year = date.today().year
     week = date.today().isocalendar().week
@@ -23,6 +25,7 @@ def index(request):
 
 
 @csrf_exempt
+@login_required
 def week_schedule(request, year, week):
     week_dates = fetch_next_week_dates(year, week)
     kino_week = list(zip(week_dates, KINO_WEEK))
@@ -60,6 +63,7 @@ def week_schedule(request, year, week):
     return render(request, 'index.html', context=context)
 
 @csrf_exempt
+@login_required
 def delete_image(request, pk):
     
     try:

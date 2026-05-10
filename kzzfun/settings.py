@@ -104,3 +104,7 @@ API_URL = env.str('API_URL', 'http://ts.kinoplan24.ru/api')
 
 # template image for schedule
 TEMPLATE = env.str('TEMPLATE', os.path.join(BASE_DIR, 'static', 'template.jpg'))
+
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
