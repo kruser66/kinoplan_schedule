@@ -18,9 +18,12 @@
             <span class="text-success me-3" style="font-weight: 500;">
               👋 Привет, {{ user.username }}!
             </span>
-            <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-              Выйти
-            </a>
+            <form action="{% url 'logout' %}" method="POST" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                Выйти
+              </button>
+            </form>
           </div>
         </div>
       </nav>
