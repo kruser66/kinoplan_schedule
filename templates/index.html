@@ -1,82 +1,53 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="ru">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Заполнения шаблона расписания</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
-  </head>
-  <body>
-    <div class="container-fluid text-center">
-      <nav class="navbar bg-success-subtle py-2">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="{% url 'index' %}">
-            <img src="{% static 'logo.svg' %}" alt="Logo" height="96" class="d-inline-block align-text-top">
-          </a>
-          <div class="d-flex align-items-center">
-            <span class="text-success me-3" style="font-weight: 500;">
-              👋 Привет, {{ user.username }}!
-            </span>
-            <form action="{% url 'logout' %}" method="POST" class="d-inline">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                Выйти
-              </button>
-            </form>
-          </div>
-        </div>
-      </nav>
-        <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
-          Оставьте включенными нужные дни недели:
-        </div>
-        <form action="" method="POST">
-            {% csrf_token %}
-            <div class="center mt-2 mb-4">
-                {% if week > 1 %}
-                  <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'-1' %}" role="button"> <<< </a>
-                {% else %}
-                  <a class="btn btn-link" href="{% url 'week_schedule' year|add:'-1' 52 %}" role="button"> <<< </a>
-                {% endif %}
-                {% for day, name_day in kino_week %}
-                    <input type="checkbox" class="btn-check" id="day-{{forloop.counter0}}" name="day-{{forloop.counter0}}" checked autocomplete="off">
-                    <label class="btn btn-outline-secondary" for="day-{{forloop.counter0}}">{{day}}<br>({{name_day}})</label>
-                {% endfor %}
-                {% if week < 52 %}
-                  <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'1' %}" role="button"> >>> </a>
-                {% else %}
-                  <a class="btn btn-link" href="{% url 'week_schedule' year|add:'1' 0 %}" role="button"> >>> </a>
-                {% endif %}
-            </div>
-                <div class="visible center mt-2 mb-4">
-                  <input class="form-check-input text-secondary" type="checkbox" value="" id="flexCheckDefault" name="fix_price">
-                  <label class="form-check-label text-secondary" for="flexCheckDefault">
-                    Единая цена на период
-                  </label>
-                </div>
-            <div class="center d-grid gap-2 col-4 mx-auto">
-              <button class="btn btn-success" type="submit">
-                    Заполнить шаблон
-              </button>
-            </div>
-        </form>
-        <br>
-        <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
-          Заполненные варианты расписания:
-        </div>
-        {% if images %}
-          <div class="row mb-4 justify-content-center">
-            {% for image in images %}
-              <div class="card" style="width: 18rem;">
-                <img src="{{ image.image.url }}" class="card-img-top" alt="Расписание на {{image.title}}">
-                <div class="card-body">
-                  <a href="{% url 'delete_image' pk=image.id %}?next={{request.get_full_path|urlencode}}" class="btn btn-danger">Удалить</a>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
+{% extends 'base.html' %}
+{% block title %}Заполнения шаблона расписания{% endblock %}
+{% block content %}
+  <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
+    Оставьте включенными нужные дни недели:
+  </div>
+  <form action="" method="POST">
+      {% csrf_token %}
+      <div class="center mt-2 mb-4">
+        {% if week > 1 %}
+          <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'-1' %}" role="button"> <<< </a>
+        {% else %}
+          <a class="btn btn-link" href="{% url 'week_schedule' year|add:'-1' 52 %}" role="button"> <<< </a>
+        {% endif %}
+        {% for day, name_day in kino_week %}
+            <input type="checkbox" class="btn-check" id="day-{{forloop.counter0}}" name="day-{{forloop.counter0}}" checked autocomplete="off">
+            <label class="btn btn-outline-secondary" for="day-{{forloop.counter0}}">{{day}}<br>({{name_day}})</label>
+        {% endfor %}
+        {% if week < 52 %}
+          <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'1' %}" role="button"> >>> </a>
+        {% else %}
+          <a class="btn btn-link" href="{% url 'week_schedule' year|add:'1' 0 %}" role="button"> >>> </a>
         {% endif %}
       </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
-  </body>
-</html>
+          <div class="visible center mt-2 mb-4">
+            <input class="form-check-input text-secondary" type="checkbox" value="" id="flexCheckDefault" name="fix_price">
+            <label class="form-check-label text-secondary" for="flexCheckDefault">
+              Единая цена на период
+            </label>
+          </div>
+      <div class="center d-grid gap-2 col-4 mx-auto">
+        <button class="btn btn-success" type="submit">
+              Заполнить шаблон
+        </button>
+      </div>
+  </form>
+  <br>
+  <div class="h4 pb-2 mb-4 text-success border-bottom border-success">
+    Заполненные варианты расписания:
+  </div>
+  {% if images %}
+    <div class="row mb-4 justify-content-center">
+      {% for image in images %}
+        <div class="card" style="width: 18rem;">
+          <img src="{{ image.image.url }}" class="card-img-top" alt="Расписание на {{image.title}}">
+          <div class="card-body">
+            <a href="{% url 'delete_image' pk=image.id %}?next={{request.get_full_path|urlencode}}" class="btn btn-danger">Удалить</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}
