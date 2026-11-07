@@ -235,6 +235,44 @@
 .wiki-breadcrumbs .sep { color: var(--w-border); }
 .wiki-breadcrumbs .current { color: var(--w-text); font-weight: 600; }
 
+/* ---------- редактор (EasyMDE приручаем под тему вики) ---------- */
+/* Без этих правил редактор показывает собственную серо-синюю тему:
+   серое превью, синие bootstrap-ссылки, чёрные рамки — чужеродно на фоне вики. */
+.editor-toolbar {
+  border: 1px solid var(--w-border);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+}
+.editor-toolbar button, .editor-toolbar a { color: var(--w-text) !important; }
+.editor-toolbar button:hover, .editor-toolbar a:hover,
+.editor-toolbar button.active, .editor-toolbar a.active {
+  background: var(--w-primary-soft);
+  border-color: var(--w-primary-soft);
+  border-radius: 6px;
+}
+.editor-toolbar i.separator { border-left: 1px solid var(--w-border); }
+.CodeMirror {
+  border: 1px solid var(--w-border);
+  border-radius: 0 0 10px 10px;
+  color: var(--w-text);
+  font-size: .95rem;
+}
+.CodeMirror-focused { border-color: var(--w-primary); }
+.cm-s-easymde .cm-link, .cm-s-easymde .cm-url { color: var(--w-muted); }
+.cm-s-easymde .cm-header-1, .cm-s-easymde .cm-header-2, .cm-s-easymde .cm-header-3 {
+  color: var(--w-text);
+}
+.editor-toolbar.fullscreen, .CodeMirror-fullscreen { z-index: 1040; }
+/* превью (обычное и side-by-side) — как боевая страница: белый фон, фиолетовые ссылки */
+.editor-preview, .editor-preview-side {
+  background: #fff;
+  color: var(--w-text);
+  border: 1px solid var(--w-border);
+}
+.editor-preview a, .editor-preview-side a { color: var(--w-primary-dark); }
+.editor-preview pre, .editor-preview-side pre { background: #23262f; color: #e8e9ef; }
+
 .badge-wiki-tag {
   background: var(--w-primary-soft); color: var(--w-primary-dark);
   border-radius: 999px; padding: .22rem .65rem; font-size: .78rem; font-weight: 600;

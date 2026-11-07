@@ -1,5 +1,10 @@
 {% extends 'wiki/base_wiki.html' %}
+{% load static %}
 {% block title %}{% if is_new %}Новая статья{% else %}Редактирование: {{ article.title }}{% endif %} — База знаний{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="{% static 'wiki/vendor/easymde.min.css' %}">
+  <link rel="stylesheet" href="{% static 'wiki/vendor/font-awesome.min.css' %}">
+{% endblock %}
 {% block wiki_page %}
 <div class="wiki-article" style="max-width: 1020px;">
   <h1>{% if is_new %}Новая статья{% else %}Редактирование{% endif %}</h1>
@@ -33,23 +38,13 @@
              placeholder="касса, возврат — через запятую">
     </div>
 
-    <label class="form-label fw-bold" for="id_body">Текст (markdown)</label>
-    <div class="d-flex flex-wrap gap-1 mb-2" id="md-toolbar">
-      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="bold" title="Жирный (Ctrl+B)"><b>Ж</b></button>
-      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="italic" title="Курсив"><i>К</i></button>
-      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="h2" title="Заголовок раздела">H2</button>
-      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="h3" title="Подзаголовок">H3</button>
-      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="list" title="Список">• список</button>
-      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="link" title="Ссылка">🔗 ссылка</button>
-      <button type="button" class="btn btn-wiki-ghost btn-sm" id="btn-img" title="Загрузить картинку с компьютера">🖼 картинка</button>
-      <input type="file" id="img-file" accept="image/*" hidden>
-      <button type="button" class="btn btn-wiki-ghost btn-sm" id="btn-preview">👁 предпросмотр</button>
-    </div>
+    <label class="form-label fw-bold" for="id_body">Текст статьи</label>
+    <p class="text-muted small mb-1">
+      Печатайте как в обычном редакторе: кнопки сверху форматируют текст,
+      «👁» показывает готовый вид, картинки вставляются кнопкой с картинкой.
+    </p>
     {{ form.body.errors }}
-    <textarea name="body" id="id_body" class="form-control" rows="18"
-              placeholder="## Заголовок раздела&#10;Текст **жирный** *курсив*…">{{ form.body.value|default:'' }}</textarea>
-
-    <div id="preview-box" class="wiki-article-body mt-3" style="display:none; border:1px dashed var(--w-border); border-radius:12px; padding:1rem;"></div>
+    <textarea name="body" id="id_body" rows="16">{{ form.body.value|default:'' }}</textarea>
 
     <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
       <div class="form-check">
@@ -62,64 +57,57 @@
     </div>
   </form>
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
+<script src="{% static 'wiki/vendor/easymde.min.js' %}"></script>
 <script>
 (function () {
-  const body = document.getElementById('id_body');
-  const previewBox = document.getElementById('preview-box');
   const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-  function around(before, after, placeholder) {
-    const s = body.selectionStart, e = body.selectionEnd;
-    const sel = body.value.slice(s, e) || placeholder;
-    body.setRangeText(before + sel + after, s, e, 'select');
-    body.focus();
-  }
-
-  document.querySelectorAll('#md-toolbar [data-md]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const k = btn.dataset.md;
-      if (k === 'bold') around('**', '**', 'жирный');
-      else if (k === 'italic') around('*', '*', 'курсив');
-      else if (k === 'h2') around('\n## ', '\n', 'Заголовок раздела');
-      else if (k === 'h3') around('\n### ', '\n', 'Подзаголовок');
-      else if (k === 'list') around('\n- ', '\n', 'пункт');
-      else if (k === 'link') around('[', '](https://)', 'текст ссылки');
-    });
-  });
-
-  document.getElementById('btn-img').addEventListener('click', function () {
-    document.getElementById('img-file').click();
-  });
-  document.getElementById('img-file').addEventListener('change', function () {
-    const file = this.files[0];
-    if (!file) return;
-    const data = new FormData();
-    data.append('file', file);
-    fetch('{% url "wiki:upload" %}', {method: 'POST', body: data,
-      headers: {'X-CSRFToken': csrf}})
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        if (j.error) { alert(j.error); return; }
-        const md = '![' + (j.alt || '') + '](' + j.url + ')';
-        const pos = body.selectionStart || body.value.length;
-        body.setRangeText('\n' + md + '\n', pos, pos, 'end');
-        body.focus();
-      });
-    this.value = '';
-  });
-
-  document.getElementById('btn-preview').addEventListener('click', function () {
-    if (previewBox.style.display !== 'none') { previewBox.style.display = 'none'; return; }
-    const data = new FormData();
-    data.append('body', body.value);
-    fetch('{% url "wiki:preview" %}', {method: 'POST', body: data,
-      headers: {'X-CSRFToken': csrf}})
-      .then(function (r) { return r.text(); })
-      .then(function (html) {
-        previewBox.innerHTML = html || '<i>пусто</i>';
-        previewBox.style.display = 'block';
-      });
+  new EasyMDE({
+    element: document.getElementById('id_body'),
+    spellChecker: false,
+    autoDownloadFontAwesome: false,   // иконки лежат у нас в static, CDN не зовём
+    status: false,
+    minHeight: '340px',
+    placeholder: 'Начните печатать. Кнопки сверху: жирный, курсив, заголовки, список, ссылка, картинка…',
+    toolbar: [
+      'bold', 'italic', 'heading', '|',
+      'quote', 'unordered-list', 'ordered-list', '|',
+      'link', 'image', '|',
+      'preview', 'side-by-side',
+    ],
+    // Превью рендерит БЭКЕНД тем же кодом, что боевую статью (markdown + bleach),
+    // поэтому «увиденное в предпросмотре == увидит читатель», включая фильтрацию HTML.
+    // previewRender в EasyMDE синхронный (Promise он не ждёт — выводит [object Promise]),
+    // поэтому синхронный XHR: тот же сервер, те же миллисекунды.
+    previewRender: function (plainText) {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '{% url "wiki:preview" %}', false);
+      xhr.setRequestHeader('X-CSRFToken', csrf);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.send('body=' + encodeURIComponent(plainText));
+      return xhr.status === 200 ? xhr.responseText : '<i>превью недоступно</i>';
+    },
+    // Кнопка/перетаскивание картинки -> наш /upload/ (сжатие Pillow) -> вставка markdown
+    imageUploadFunction: function (file, onSuccess, onError) {
+      const data = new FormData();
+      data.append('file', file);
+      fetch('{% url "wiki:upload" %}', {
+        method: 'POST', body: data, headers: {'X-CSRFToken': csrf},
+      }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.error) { onError(j.error); return; }
+          onSuccess(j.url);
+        })
+        .catch(function () { onError('Загрузка не удалась, попробуйте ещё раз'); });
+    },
+    // Ctrl-S в EasyMDE 2.21 принимает только строку-вид «Ctrl-S»; привязываем
+    // его к сохранению формы штатным способом — submit скрытой кнопки.
+    save: 'Сохранить',
+    shortcuts: { save: 'Ctrl-S' },
+    onSave: function () { document.getElementById('article-form').requestSubmit(); },
   });
 })();
 </script>
