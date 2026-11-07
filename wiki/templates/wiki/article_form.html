@@ -71,11 +71,14 @@
     autoDownloadFontAwesome: false,   // иконки лежат у нас в static, CDN не зовём
     status: false,
     minHeight: '340px',
+    // «книжка» без оверлея: иначе side-by-side уводит редактор в fullscreen —
+    // шапка и кнопки сохранения исчезают, кажется что «всё разъехалось».
+    sideBySideFullscreen: false,
     placeholder: 'Начните печатать. Кнопки сверху: жирный, курсив, заголовки, список, ссылка, картинка…',
     toolbar: [
       'bold', 'italic', 'heading', '|',
       'quote', 'unordered-list', 'ordered-list', '|',
-      'link', 'image', '|',
+      'link', 'upload-image', '|',
       'preview', 'side-by-side',
     ],
     // Превью рендерит БЭКЕНД тем же кодом, что боевую статью (markdown + bleach),
@@ -90,18 +93,25 @@
       xhr.send('body=' + encodeURIComponent(plainText));
       return xhr.status === 200 ? xhr.responseText : '<i>превью недоступно</i>';
     },
-    // Кнопка/перетаскивание картинки -> наш /upload/ (сжатие Pillow) -> вставка markdown
+    // Картинки: кнопка «upload-image» (не «image» — та только вставляет заготовку
+    // ![alt](url) и просит ссылку) и перетаскивание/вставка из буфера — всё идёт
+    // через наш /upload/ со сжатием Pillow. uploadImage:true включает drag&drop.
+    uploadImage: true,
     imageUploadFunction: function (file, onSuccess, onError) {
       const data = new FormData();
       data.append('file', file);
       fetch('{% url "wiki:upload" %}', {
         method: 'POST', body: data, headers: {'X-CSRFToken': csrf},
-      }).then(function (r) { return r.json(); })
+      }).then(function (r) {
+        // при 4xx/5xx django вернёт HTML, а не JSON — тащить статус в ошибку,
+        // иначе админ видит бессмысленное «попробуйте ещё раз»
+        return r.json().catch(function () { throw new Error('HTTP ' + r.status); });
+      })
         .then(function (j) {
           if (j.error) { onError(j.error); return; }
           onSuccess(j.url);
         })
-        .catch(function () { onError('Загрузка не удалась, попробуйте ещё раз'); });
+        .catch(function (e) { onError('Загрузка не удалась: ' + e.message); });
     },
     // Ctrl-S в EasyMDE 2.21 принимает только строку-вид «Ctrl-S»; привязываем
     // его к сохранению формы штатным способом — submit скрытой кнопки.

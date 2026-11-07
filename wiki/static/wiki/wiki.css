@@ -272,7 +272,12 @@
 .cm-s-easymde .cm-header-1, .cm-s-easymde .cm-header-2, .cm-s-easymde .cm-header-3 {
   color: var(--w-text);
 }
-.editor-toolbar.fullscreen, .CodeMirror-fullscreen { z-index: 1040; }
+/* z-index важнее, чем у easymde.min.css (он подключается ПОЗДНЕ wiki.css,
+   и при равной специфичности побеждал бы его z-index:9 — тулбар уходил под
+   липкую шапку z-1030, «кнопки пропадали»). .EasyMDEContainer добавляет вес. */
+.EasyMDEContainer .editor-toolbar.fullscreen { z-index: 1050; }
+.EasyMDEContainer .CodeMirror-fullscreen { z-index: 1040; }
+.EasyMDEContainer .editor-preview-side { z-index: 1045; }
 /* превью (обычное и side-by-side) — как боевая страница: белый фон, фиолетовые ссылки */
 .editor-preview, .editor-preview-side {
   background: #fff;
