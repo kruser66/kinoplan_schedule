@@ -1,6 +1,10 @@
-from django.core.management.base import BaseCommand
+from datetime import timedelta
 
-from schedule.cleanup import cleanup_old_images
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from schedule.cleanup import cleanup_empty_schedules, cleanup_old_images
+from schedule.models import ScheduleImage
 
 
 class Command(BaseCommand):
@@ -10,7 +14,8 @@ class Command(BaseCommand):
     (см. schedule/cleanup.py). Команда — для ручного запуска и проверок.
     """
 
-    help = 'Чистка старых картинок расписаний (по умолчанию старше 30 дней)'
+    help = ('Чистка старых картинок расписаний (по умолчанию старше 30 дней) '
+            'и пустых недель без картинок')
 
     def add_arguments(self, parser):
         parser.add_argument('--days', type=int, default=30,
@@ -20,17 +25,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if options['dry_run']:
-            from schedule.models import ScheduleImage
-            from datetime import timedelta
-            from django.utils import timezone
             cutoff = timezone.now() - timedelta(days=options['days'])
             names = ScheduleImage.objects.filter(created_at__lt=cutoff).values_list(
                 'image', flat=True)
-            self.stdout.write(f'[dry-run] к удалению {len(names)} шт: ' + ', '.join(names))
+            empty = cleanup_empty_schedules(dry_run=True)
+            self.stdout.write(f'[dry-run] картинок к удалению {len(names)} шт: '
+                              + ', '.join(names))
+            self.stdout.write(f'[dry-run] пустых недель без картинок: {empty} шт')
             return
 
         result = cleanup_old_images(days=options['days'])
         self.stdout.write(self.style.SUCCESS(
-            f"Удалено: {result['rows']} записей, {result['files']} файлов "
-            f"(уже отсутствовали: {result['missing']})"
+            f"Удалено: {result['rows']} записей картинок, {result['files']} файлов "
+            f"(уже отсутствовали: {result['missing']}), "
+            f"пустых недель: {result['schedules']}"
         ))

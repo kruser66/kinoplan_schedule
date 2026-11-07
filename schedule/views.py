@@ -1,6 +1,4 @@
-import os
-from datetime import date, datetime
-from django.conf import settings
+from datetime import date
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -9,8 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
 from schedule.models import Schedule, ScheduleImage
-from make_schedule import fetch_next_week_dates, show_schedule, fetch_one_two_price
-
+from make_schedule import fetch_next_week_dates, show_schedule
 
 from wiki.models import Article, Category
 
@@ -41,9 +38,15 @@ def week_schedule(request, year, week):
     week_dates = fetch_next_week_dates(year, week)
     kino_week = list(zip(week_dates, KINO_WEEK))
 
-    schedule, _ = Schedule.objects.get_or_create(year=year, week=week)
+    # Просмотр — только чтение: записи недели может и не быть.
+    schedule = Schedule.objects.filter(year=year, week=week).first()
 
     if request.method == 'POST':
+        # Запись недели создаётся только при генерации картинки (POST).
+        # Просто просмотр страницы — только чтение: иначе health-чекеры
+        # и листание стрелок наплодили 100k+ пустых строк на проде.
+        schedule, _ = Schedule.objects.get_or_create(year=year, week=week)
+
         selection = []
         for day in range(7):
             selection.append(1 if request.POST.getlist(f'day-{day}') else 0)
@@ -65,7 +68,7 @@ def week_schedule(request, year, week):
 
     context = {
         'kino_week': kino_week,
-        'images': schedule.images.all(),
+        'images': schedule.images.all() if schedule else ScheduleImage.objects.none(),
         'visibility': 'invisible',
         'year': year,
         'week': week

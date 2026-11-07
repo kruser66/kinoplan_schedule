@@ -1,8 +1,11 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.management import call_command
+from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -61,7 +64,6 @@ class CleanupOldImagesTests(TestCase):
 
         self.assertFalse(ScheduleImage.objects.filter(pk=old.pk).exists())
         self.assertTrue(ScheduleImage.objects.filter(pk=fresh.pk).exists())
-        from django.core.files.storage import default_storage
         self.assertFalse(default_storage.exists(old.image.name))
         self.assertTrue(default_storage.exists(fresh.image.name))
 
@@ -72,3 +74,43 @@ class CleanupOldImagesTests(TestCase):
         call_command('cleanup_old_images', '--days', '30', '--dry-run')
 
         self.assertTrue(ScheduleImage.objects.filter(pk=old.pk).exists())
+
+
+class WeekViewReadonlyTests(TestCase):
+    """Просмотр недели — только чтение: ни записей, ни дубликатов."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='viewer', password='x')
+        self.client.force_login(self.user)
+
+    @patch('schedule.views.fetch_next_week_dates', return_value=['д1'] * 7)
+    def test_browsing_weeks_creates_no_schedules(self, _mock):
+        for week in (44, 45, 46):
+            self.assertEqual(self.client.get(
+                reverse('week_schedule', args=(2026, week))).status_code, 200)
+        self.assertEqual(Schedule.objects.count(), 0)
+
+    def test_unique_year_week(self):
+        Schedule.objects.create(year=2026, week=1)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Schedule.objects.create(year=2026, week=1)
+
+
+@override_settings(MEDIA_ROOT='/tmp/opencode/test_media')
+class EmptySchedulePurgeTests(TestCase):
+    def test_purge_removes_empty_keeps_weeks_with_images(self):
+        keep = Schedule.objects.create(year=2026, week=47)
+        img = ScheduleImage(schedule=keep, title='fresh')
+        img.image.save('fresh.jpg', ContentFile(b'fake-jpeg'), save=True)
+        Schedule.objects.create(year=2026, week=48)  # пустая «бирка»
+
+        call_command('cleanup_old_images', '--days', '30')
+
+        self.assertFalse(Schedule.objects.filter(year=2026, week=48).exists())
+        self.assertTrue(Schedule.objects.filter(pk=keep.pk).exists())
+        self.assertTrue(ScheduleImage.objects.filter(pk=img.pk).exists())
+
+    def test_dry_run_keeps_empty_schedules(self):
+        Schedule.objects.create(year=2026, week=49)
+        call_command('cleanup_old_images', '--days', '30', '--dry-run')
+        self.assertTrue(Schedule.objects.filter(year=2026, week=49).exists())

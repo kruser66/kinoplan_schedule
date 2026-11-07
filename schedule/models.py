@@ -8,6 +8,11 @@ class Schedule(models.Model):
     class Meta:
         verbose_name = 'расписание'
         verbose_name_plural = 'расписания'
+        # одна запись на неделю: без ограничения параллельные запросы
+        # плодили дубликаты (на проде набежало >100k строк)
+        constraints = [
+            models.UniqueConstraint(fields=('year', 'week'), name='unique_year_week'),
+        ]
 
     def __str__(self):
         return f'{self.week} неделя {self.year} год'
