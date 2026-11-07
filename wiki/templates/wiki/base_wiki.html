@@ -11,7 +11,7 @@
   <header class="wiki-topbar">
     <button class="btn btn-wiki-ghost btn-sm d-lg-none" type="button"
             data-bs-toggle="collapse" data-bs-target="#wikiNav" aria-controls="wikiNav">☰</button>
-    <a class="wiki-brand" href="{% url 'wiki:home' %}">
+    <a class="wiki-brand" href="{% url 'index' %}" title="На главную — выбор раздела">
       <span class="wiki-brand-icon">📖</span>
       <span>
         <div class="wiki-brand-title">База знаний</div>
@@ -24,7 +24,6 @@
              value="{{ query|default:'' }}" aria-label="Поиск">
     </form>
     <div class="ms-auto d-flex align-items-center gap-2 flex-shrink-0">
-      <a class="btn btn-wiki-ghost btn-sm" href="{% url 'current_week' %}" title="Текущая неделя расписания">📅 Расписание</a>
       {% if user.is_staff %}
         <a class="btn btn-wiki btn-sm" href="{% url 'admin:wiki_article_add' %}">＋ Новая статья</a>
       {% endif %}
