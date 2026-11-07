@@ -12,15 +12,26 @@ from schedule.models import Schedule, ScheduleImage
 from make_schedule import fetch_next_week_dates, show_schedule, fetch_one_two_price
 
 
+from wiki.models import Article, Category
+
+
 KINO_WEEK = ['ЧТ', 'ПТ', 'СБ', 'ВС', 'ПН', 'ВТ', 'СР']
 
 
 @login_required
 def index(request):
+    """Портал: выбор раздела — расписание или база знаний."""
+    return render(request, 'home.html', {
+        'wiki_article_count': Article.objects.filter(is_draft=False).count(),
+        'wiki_category_count': Category.objects.count(),
+    })
+
+
+@login_required
+def current_week(request):
+    """Текущая кинонеделя — пункт «Расписание» с портала и LOGIN_REDIRECT."""
     year = date.today().year
     week = date.today().isocalendar().week
-    print(fetch_next_week_dates(year, week - 1))
-
     return HttpResponseRedirect(reverse('week_schedule', args=(year, week,)))
 
 

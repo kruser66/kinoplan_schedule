@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}kzzfun — выбор раздела{% endblock %}
+{% block content %}
+  <div class="row justify-content-center mt-5 g-4">
+    <div class="col-md-4">
+      <a href="{% url 'current_week' %}" class="text-decoration-none">
+        <div class="card h-100 border-success-subtle shadow-sm">
+          <div class="card-body text-success">
+            <div style="font-size: 2.6rem;">📅</div>
+            <h4 class="mt-2 mb-1">Расписание</h4>
+            <p class="text-secondary small mb-0">
+              Заполнение шаблона сеансов на кинонеделю:<br>сеансы, цены, картинки для соцсетей.
+            </p>
+            <span class="btn btn-outline-success btn-sm mt-3">Открыть</span>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="{% url 'wiki:home' %}" class="text-decoration-none">
+        <div class="card h-100 border-success-subtle shadow-sm">
+          <div class="card-body text-success">
+            <div style="font-size: 2.6rem;">📚</div>
+            <h4 class="mt-2 mb-1">База знаний</h4>
+            <p class="text-secondary small mb-0">
+              Инструкции и ответы на рабочие вопросы.<br>
+              {{ wiki_article_count }} {{ wiki_article_count|pluralize:'статья,статьи' }}
+              в {{ wiki_category_count }} {{ wiki_category_count|pluralize:'категории,категориях' }}.
+            </p>
+            <span class="btn btn-outline-success btn-sm mt-3">Открыть</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+{% endblock %}
