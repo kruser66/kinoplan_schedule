@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
-from wiki.models import Article, Category
+from wiki.models import Article, Category, Tag
 from wiki.render import render_markdown
 
 
@@ -35,6 +35,15 @@ def category_page(request, slug):
     return render(request, 'wiki/article_list.html', {
         'category': category,
         'articles': category.articles.filter(is_draft=False),
+    })
+
+
+@login_required
+def tag_page(request, slug):
+    tag = get_object_or_404(Tag, slug=slug)
+    return render(request, 'wiki/tag_articles.html', {
+        'tag': tag,
+        'articles': tag.article_set.filter(is_draft=False),
     })
 
 

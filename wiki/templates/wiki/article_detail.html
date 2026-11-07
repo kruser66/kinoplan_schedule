@@ -17,7 +17,7 @@
     <p class="text-secondary small">
       {{ article.category.name }} · изменена {{ article.updated_at|date:'d.m.Y H:i' }}
       {% if article.author %} · автор: {{ article.author.username }}{% endif %}
-      {% for t in article.tags.all %} <span class="badge text-bg-secondary">#{{ t.name }}</span>{% endfor %}
+      {% for t in article.tags.all %}<a class="badge text-bg-secondary text-decoration-none" href="{% url 'wiki:tag' t.slug %}">#{{ t.name }}</a>{% endfor %}
     </p>
     <hr>
     <div class="wiki-body">{{ body_html|safe }}</div>

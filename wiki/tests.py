@@ -80,6 +80,17 @@ class WikiViewTests(TestCase):
         self.assertContains(response, '<h2>Шаг 1</h2>')
         self.assertNotContains(response, '<script>')
 
+    def test_tag_page_filters_articles(self):
+        from wiki.models import Tag
+        t = Tag.objects.create(name='возврат')
+        self.article.tags.add(t)
+        other = Article.objects.create(
+            title='Уникальная другая статья', category=self.cat, body='текст без тега')
+        self.client.force_login(self.kassir)
+        response = self.client.get(reverse('wiki:tag', args=[t.slug]))
+        self.assertContains(response, 'Как открыть смену')
+        self.assertNotContains(response, 'Уникальная другая статья')
+
     def test_draft_not_visible(self):
         draft = Article.objects.create(title='Секрет', category=self.cat, body='t', is_draft=True)
         self.client.force_login(self.kassir)
