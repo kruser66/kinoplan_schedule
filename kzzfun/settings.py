@@ -110,3 +110,9 @@ TEMPLATE = env.str('TEMPLATE', os.path.join(BASE_DIR, 'static', 'template.jpg'))
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# HTTPS-hardening (включить на проде задав SECURE_COOKIES=True в .env;
+# редирект http->https делает nginx, поэтому SECURE_SSL_REDIRECT не трогаем)
+if env.bool('SECURE_COOKIES', False):
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
