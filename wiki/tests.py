@@ -239,3 +239,102 @@ class CategoryCycleTests(TestCase):
         a = Category.objects.create(name='Альфа')
         b = Category(name='Бета', parent=a)
         b.full_clean(exclude=['slug'])  # без цикл-сценария — чисто
+
+
+class EditorTests(TestCase):
+    """Редактор статей на сайте: права, сохранение, превью, загрузка картинок."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user('zavhoz', password='x', is_staff=True)
+        self.cashier = User.objects.create_user('kassir', password='x')
+        self.cat = Category.objects.create(name='Касса')
+
+    def test_cashier_redirected_from_editor(self):
+        self.client.login(username='kassir', password='x')
+        r = self.client.get(reverse('wiki:new'))
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/accounts/login/', r.url)
+
+    def test_staff_creates_article_with_tags(self):
+        self.client.login(username='zavhoz', password='x')
+        r = self.client.post(reverse('wiki:new'), {
+            'title': 'Как закрыть кассу', 'category': self.cat.pk,
+            'body': '## Шаг 1\nСнять X-отчёт', 'tags_input': '#касса, Закрытие;',
+        })
+        art = Article.objects.get(title='Как закрыть кассу')
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(r.url, art.get_absolute_url())
+        self.assertEqual(art.author, self.staff)
+        self.assertEqual({t.name for t in art.tags.all()}, {'касса', 'закрытие'})
+        # обычному читателю статья видна
+        self.client.login(username='kassir', password='x')
+        self.assertContains(self.client.get(art.get_absolute_url()), 'Снять X-отчёт')
+
+    def test_draft_creation_redirects_home_and_hidden(self):
+        self.client.login(username='zavhoz', password='x')
+        r = self.client.post(reverse('wiki:new'), {
+            'title': 'Заготовка', 'category': self.cat.pk,
+            'body': 'пишем потом', 'is_draft': 'on',
+        })
+        self.assertEqual(r.status_code, 302)
+        self.assertEqual(r.url, reverse('wiki:home'))
+        art = Article.objects.get(title='Заготовка')
+        self.client.login(username='kassir', password='x')
+        self.assertEqual(self.client.get(art.get_absolute_url()).status_code, 404)
+
+    def test_edit_updates_body_and_tags(self):
+        art = Article.objects.create(title='Правка', category=self.cat, body='раз')
+        art.tags.set([Tag.objects.create(name='старый')])
+        self.client.login(username='zavhoz', password='x')
+        self.client.post(reverse('wiki:edit', args=[art.slug]), {
+            'title': 'Правка', 'category': self.cat.pk,
+            'body': 'два', 'tags_input': 'новый',
+        })
+        art.refresh_from_db()
+        self.assertEqual(art.body, 'два')
+        self.assertEqual([t.name for t in art.tags.all()], ['новый'])
+
+    def test_preview_uses_same_sanitizer_as_page(self):
+        self.client.login(username='zavhoz', password='x')
+        r = self.client.post(reverse('wiki:preview'), {
+            'body': '**жир** <script>alert(1)</script> <img src=x onerror=alert(1)>',
+        })
+        html = r.content.decode()
+        self.assertIn('<strong>жир</strong>', html)
+        self.assertNotIn('<script>', html)
+        self.assertNotIn('onerror', html)
+
+    def test_upload_compresses_to_jpeg(self):
+        from io import BytesIO
+
+        from PIL import Image
+
+        from django.test import override_settings
+
+        buf = BytesIO()
+        Image.new('RGB', (2400, 1600), 'red').save(buf, format='PNG')
+        buf.seek(0)
+        buf.name = 'screen.png'
+        with override_settings(MEDIA_ROOT=self.settings_media_root()):
+            self.client.login(username='zavhoz', password='x')
+            r = self.client.post(reverse('wiki:upload'), {'file': buf})
+            data = r.json()
+            self.assertTrue(data['url'].endswith('.jpg'), data)
+            self.assertIn('/media/wiki/', data['url'])
+            from django.conf import settings
+            path = data['url'].replace(settings.MEDIA_URL, settings.MEDIA_ROOT + '/')
+            self.assertLessEqual(max(Image.open(path).size), 1400)
+
+    def settings_media_root(self):
+        import tempfile
+        return tempfile.mkdtemp()
+
+    def test_upload_rejects_non_image(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.client.login(username='zavhoz', password='x')
+        r = self.client.post(reverse('wiki:upload'), {
+            'file': SimpleUploadedFile('virus.txt', b'not a picture', content_type='image/png'),
+        })
+        self.assertEqual(r.status_code, 400)
+        self.assertIn('error', r.json())

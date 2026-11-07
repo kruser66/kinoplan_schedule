@@ -1,0 +1,126 @@
+{% extends 'wiki/base_wiki.html' %}
+{% block title %}{% if is_new %}Новая статья{% else %}Редактирование: {{ article.title }}{% endif %} — База знаний{% endblock %}
+{% block wiki_page %}
+<div class="wiki-article" style="max-width: 1020px;">
+  <h1>{% if is_new %}Новая статья{% else %}Редактирование{% endif %}</h1>
+
+  <form method="post" id="article-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="row g-3 mb-2">
+      <div class="col-12 col-md-8">
+        <label class="form-label fw-bold" for="id_title">Заголовок</label>
+        {{ form.title.errors }}
+        <input type="text" name="title" value="{{ form.title.value|default:'' }}"
+               class="form-control" id="id_title" maxlength="200" required>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label fw-bold" for="id_category">Категория</label>
+        {{ form.category.errors }}
+        <select name="category" id="id_category" class="form-select" required>
+          {% for c in form.category.field.queryset %}
+            <option value="{{ c.pk }}" {% if form.category.value|stringformat:"s" == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label fw-bold" for="id_tags_input">Теги</label>
+      <input type="text" name="tags_input" id="id_tags_input" class="form-control"
+             value="{{ form.tags_input.value|default:'' }}"
+             placeholder="касса, возврат — через запятую">
+    </div>
+
+    <label class="form-label fw-bold" for="id_body">Текст (markdown)</label>
+    <div class="d-flex flex-wrap gap-1 mb-2" id="md-toolbar">
+      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="bold" title="Жирный (Ctrl+B)"><b>Ж</b></button>
+      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="italic" title="Курсив"><i>К</i></button>
+      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="h2" title="Заголовок раздела">H2</button>
+      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="h3" title="Подзаголовок">H3</button>
+      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="list" title="Список">• список</button>
+      <button type="button" class="btn btn-wiki-ghost btn-sm" data-md="link" title="Ссылка">🔗 ссылка</button>
+      <button type="button" class="btn btn-wiki-ghost btn-sm" id="btn-img" title="Загрузить картинку с компьютера">🖼 картинка</button>
+      <input type="file" id="img-file" accept="image/*" hidden>
+      <button type="button" class="btn btn-wiki-ghost btn-sm" id="btn-preview">👁 предпросмотр</button>
+    </div>
+    {{ form.body.errors }}
+    <textarea name="body" id="id_body" class="form-control" rows="18"
+              placeholder="## Заголовок раздела&#10;Текст **жирный** *курсив*…">{{ form.body.value|default:'' }}</textarea>
+
+    <div id="preview-box" class="wiki-article-body mt-3" style="display:none; border:1px dashed var(--w-border); border-radius:12px; padding:1rem;"></div>
+
+    <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="is_draft" id="id_is_draft"
+               {% if form.is_draft.value %}checked{% endif %}>
+        <label class="form-check-label" for="id_is_draft">Черновик (не видят читатели)</label>
+      </div>
+      <button type="submit" class="btn btn-wiki">{% if is_new %}Создать статью{% else %}Сохранить{% endif %}</button>
+      {% if not is_new %}<a class="btn btn-wiki-ghost" href="{{ article.get_absolute_url }}">Отмена</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  const body = document.getElementById('id_body');
+  const previewBox = document.getElementById('preview-box');
+  const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  function around(before, after, placeholder) {
+    const s = body.selectionStart, e = body.selectionEnd;
+    const sel = body.value.slice(s, e) || placeholder;
+    body.setRangeText(before + sel + after, s, e, 'select');
+    body.focus();
+  }
+
+  document.querySelectorAll('#md-toolbar [data-md]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const k = btn.dataset.md;
+      if (k === 'bold') around('**', '**', 'жирный');
+      else if (k === 'italic') around('*', '*', 'курсив');
+      else if (k === 'h2') around('\n## ', '\n', 'Заголовок раздела');
+      else if (k === 'h3') around('\n### ', '\n', 'Подзаголовок');
+      else if (k === 'list') around('\n- ', '\n', 'пункт');
+      else if (k === 'link') around('[', '](https://)', 'текст ссылки');
+    });
+  });
+
+  document.getElementById('btn-img').addEventListener('click', function () {
+    document.getElementById('img-file').click();
+  });
+  document.getElementById('img-file').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const data = new FormData();
+    data.append('file', file);
+    fetch('{% url "wiki:upload" %}', {method: 'POST', body: data,
+      headers: {'X-CSRFToken': csrf}})
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.error) { alert(j.error); return; }
+        const md = '![' + (j.alt || '') + '](' + j.url + ')';
+        const pos = body.selectionStart || body.value.length;
+        body.setRangeText('\n' + md + '\n', pos, pos, 'end');
+        body.focus();
+      });
+    this.value = '';
+  });
+
+  document.getElementById('btn-preview').addEventListener('click', function () {
+    if (previewBox.style.display !== 'none') { previewBox.style.display = 'none'; return; }
+    const data = new FormData();
+    data.append('body', body.value);
+    fetch('{% url "wiki:preview" %}', {method: 'POST', body: data,
+      headers: {'X-CSRFToken': csrf}})
+      .then(function (r) { return r.text(); })
+      .then(function (html) {
+        previewBox.innerHTML = html || '<i>пусто</i>';
+        previewBox.style.display = 'block';
+      });
+  });
+})();
+</script>
+{% endblock %}

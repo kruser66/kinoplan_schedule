@@ -3,12 +3,17 @@ import sqlite3
 import tempfile
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db import connection
-from django.http import HttpResponseForbidden, StreamingHttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                         HttpResponseForbidden, JsonResponse,
+                         StreamingHttpResponse)
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from wiki.forms import ArticleForm
+from wiki.images import BadImage, save_wiki_image
 from wiki.models import Article, Category, Tag
 from wiki.permissions import can_edit
 from wiki.render import render_markdown
@@ -115,3 +120,59 @@ def article_page(request, slug):
         'article': article,
         'body_html': render_markdown(article.body),
     })
+
+
+# ---------- редактор статей (только staff, см. wiki.permissions.can_edit) ----------
+
+@user_passes_test(can_edit, login_url='/accounts/login/')
+def article_new(request):
+    return _article_form(request, Article(), is_new=True)
+
+
+@user_passes_test(can_edit, login_url='/accounts/login/')
+def article_edit(request, slug):
+    article = get_object_or_404(Article, slug=slug)
+    return _article_form(request, article, is_new=False)
+
+
+def _article_form(request, article, is_new):
+    if request.method == 'POST':
+        form = ArticleForm(request.POST, instance=article)
+        if form.is_valid():
+            obj = form.save()
+            if not obj.author:
+                obj.author = request.user
+                obj.save(update_fields=['author'])
+            messages.success(request, 'Статья сохранена')
+            return redirect(obj if not obj.is_draft else 'wiki:home')
+    else:
+        form = ArticleForm(instance=article)
+    return render(request, 'wiki/article_form.html', {
+        'form': form, 'article': article, 'is_new': is_new,
+        'nav_active': 'edit',
+    })
+
+
+@user_passes_test(can_edit, login_url='/accounts/login/')
+def preview(request):
+    """Через то же render_markdown, что рендерит боевую статью — превью
+    показывает ровно то, что увидит читатель, включая фильтры bleach."""
+    if request.method != 'POST':
+        return HttpResponseBadRequest()
+    return HttpResponse(render_markdown(request.POST.get('body', '')))
+
+
+@user_passes_test(can_edit, login_url='/accounts/login/')
+def upload_image(request):
+    """Картинка для вставки в статью: сжимается и кладётся в media/wiki/."""
+    if request.method != 'POST':
+        return HttpResponseBadRequest()
+    upload = request.FILES.get('file')
+    if not upload:
+        return JsonResponse({'error': 'Файл не пришёл'}, status=400)
+    try:
+        url = save_wiki_image(upload, hint=upload.name)
+    except BadImage as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    alt = os.path.splitext(upload.name)[0][:60]
+    return JsonResponse({'url': url, 'alt': alt})

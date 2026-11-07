@@ -27,8 +27,8 @@
     {% if user.is_staff %}
       <hr class="my-4">
       <div class="d-flex gap-2">
-        <a class="btn btn-wiki-ghost btn-sm" href="{% url 'admin:wiki_article_change' article.id %}">✏️ Редактировать (админка)</a>
-        <a class="btn btn-wiki-ghost btn-sm" href="{% url 'admin:wiki_article_add' %}">＋ Новая статья</a>
+        <a class="btn btn-wiki btn-sm" href="{% url 'wiki:edit' article.slug %}">✏️ Редактировать</a>
+        <a class="btn btn-wiki-ghost btn-sm" href="{% url 'wiki:new' %}">＋ Новая статья</a>
       </div>
     {% endif %}
   </article>
