@@ -6,20 +6,20 @@
   </div>
   <form action="" method="POST">
       {% csrf_token %}
-      <div class="center mt-2 mb-4">
+      <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-2 mb-4">
         {% if week > 1 %}
-          <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'-1' %}" role="button"> <<< </a>
+          <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'-1' %}" role="button"> &lt;&lt;&lt; </a>
         {% else %}
-          <a class="btn btn-link" href="{% url 'week_schedule' year|add:'-1' 52 %}" role="button"> <<< </a>
+          <a class="btn btn-link" href="{% url 'week_schedule' year|add:'-1' 52 %}" role="button"> &lt;&lt;&lt; </a>
         {% endif %}
         {% for day, name_day in kino_week %}
             <input type="checkbox" class="btn-check" id="day-{{forloop.counter0}}" name="day-{{forloop.counter0}}" checked autocomplete="off">
             <label class="btn btn-outline-secondary" for="day-{{forloop.counter0}}">{{day}}<br>({{name_day}})</label>
         {% endfor %}
         {% if week < 52 %}
-          <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'1' %}" role="button"> >>> </a>
+          <a class="btn btn-link" href="{% url 'week_schedule' year week|add:'1' %}" role="button"> &gt;&gt;&gt; </a>
         {% else %}
-          <a class="btn btn-link" href="{% url 'week_schedule' year|add:'1' 0 %}" role="button"> >>> </a>
+          <a class="btn btn-link" href="{% url 'week_schedule' year|add:'1' 0 %}" role="button"> &gt;&gt;&gt; </a>
         {% endif %}
       </div>
           <div class="visible center mt-2 mb-4">
@@ -39,12 +39,14 @@
     Заполненные варианты расписания:
   </div>
   {% if images %}
-    <div class="row mb-4 justify-content-center">
+    <div class="row g-3 mb-4 justify-content-center">
       {% for image in images %}
-        <div class="card" style="width: 18rem;">
-          <img src="{{ image.image.url }}" class="card-img-top" alt="Расписание на {{image.title}}">
-          <div class="card-body">
-            <a href="{% url 'delete_image' pk=image.id %}?next={{request.get_full_path|urlencode}}" class="btn btn-danger">Удалить</a>
+        <div class="col-auto">
+          <div class="card" style="width: 18rem;">
+            <img src="{{ image.image.url }}" class="card-img-top" alt="Расписание на {{image.title}}">
+            <div class="card-body">
+              <a href="{% url 'delete_image' pk=image.id %}?next={{request.get_full_path|urlencode}}" class="btn btn-danger">Удалить</a>
+            </div>
           </div>
         </div>
       {% endfor %}

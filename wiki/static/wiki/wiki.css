@@ -17,6 +17,8 @@
 .wiki-topbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: .6rem;
   gap: 1rem;
   background: #fff;
   border-bottom: 1px solid var(--w-border);
@@ -204,7 +206,11 @@
   background: #fff; border: 1px solid var(--w-border); border-radius: 14px;
   padding: 2rem 2.4rem; max-width: 860px; text-align: left;
 }
-@media (max-width: 575.98px) { .wiki-article { padding: 1.2rem 1.1rem; } }
+@media (max-width: 575.98px) {
+  .wiki-article { padding: 1.2rem 1.1rem; }
+  /* поиск не прячем, а переносим отдельной строкой под брендом/аватаром */
+  .wiki-search { flex: 1 1 100%; max-width: none; order: 3; }
+}
 .wiki-article h1 { font-weight: 800; margin-bottom: .4rem; }
 .wiki-article .meta { color: var(--w-muted); font-size: .87rem; margin-bottom: 1.1rem; }
 .wiki-article-body { line-height: 1.65; }

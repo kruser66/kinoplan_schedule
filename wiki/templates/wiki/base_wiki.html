@@ -18,7 +18,7 @@
         <div class="wiki-brand-sub">wiki &amp; docs</div>
       </span>
     </a>
-    <form class="wiki-search d-none d-sm-block" action="{% url 'wiki:search' %}" method="get" role="search">
+    <form class="wiki-search" action="{% url 'wiki:search' %}" method="get" role="search">
       <span class="wiki-search-icon">⌕</span>
       <input type="search" name="q" class="form-control" placeholder="Поиск по базе знаний…"
              value="{{ query|default:'' }}" aria-label="Поиск">
