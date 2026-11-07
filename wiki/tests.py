@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db.models import ProtectedError, Q
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
@@ -21,7 +22,6 @@ class CategoryTests(TestCase):
         self.assertEqual(second.slug, 'тестовый-конфликт-2')
 
     def test_article_protects_category(self):
-        from django.db.models import ProtectedError
         cat = Category.objects.create(name='Касса')
         Article.objects.create(title='Тест', category=cat, body='текст')
         with self.assertRaises(ProtectedError):
@@ -82,7 +82,6 @@ class WikiViewTests(TestCase):
         self.assertNotContains(response, '<script>')
 
     def test_tag_page_filters_articles(self):
-        from wiki.models import Tag
         t, _ = Tag.objects.get_or_create(name='возврат')
         self.article.tags.add(t)
         other = Article.objects.create(
@@ -179,7 +178,6 @@ class DemoSeedTests(TestCase):
 
     def test_demo_articles_searchable(self):
         """Демо-статьи находятся поиском (search_text заполнен в миграции)."""
-        from django.db.models import Q
         self.assertTrue(Article.objects.filter(
             Q(search_text__contains='x-отчёт')).exists())
 

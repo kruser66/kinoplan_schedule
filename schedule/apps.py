@@ -7,8 +7,11 @@ logger = logging.getLogger(__name__)
 
 
 def cleanup_on_login(sender, request, user, **kwargs):
-    """При входе — прибрать картинки старше месяца (см. schedule/cleanup.py)."""
+    """При входе — прибрать картинки старше месяца и пустые недели
+    (см. schedule/cleanup.py)."""
     try:
+        # импорт внутри обработчика: apps.py грузится до моделей,
+        # на верху файла импортировать schedule.cleanup нельзя
         from schedule.cleanup import cleanup_old_images
         result = cleanup_old_images()
         if result['rows']:
