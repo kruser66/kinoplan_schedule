@@ -10,6 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from schedule.cleanup import cleanup_old_images
 from schedule.models import Schedule, ScheduleImage
 
 
@@ -117,7 +118,6 @@ class EmptySchedulePurgeTests(TestCase):
 
     def test_missing_file_counted_as_missing_not_files(self):
         """Файла нет на диске -> missing, а не files (W-4)."""
-        from schedule.cleanup import cleanup_old_images
         schedule = Schedule.objects.create(year=2026, week=50)
         img = ScheduleImage(schedule=schedule, title='ghost')
         img.image.name = 'ghost-absent-не-на-диске.jpg'  # файл не создаём
@@ -131,3 +131,20 @@ class EmptySchedulePurgeTests(TestCase):
         self.assertEqual(result['files'], 0)
         self.assertEqual(result['rows'], 1)
         self.assertFalse(ScheduleImage.objects.filter(pk=img.pk).exists())
+
+    def test_io_error_skips_row_instead_of_orphaning_file(self):
+        """Настоящий сбой IO: файл мог остаться -> строку НЕ удаляем (B-2)."""
+        schedule = Schedule.objects.create(year=2026, week=51)
+        img = ScheduleImage(schedule=schedule, title='io-error')
+        img.image.save('io-error.jpg', ContentFile(b'fake-jpeg'), save=True)
+        ScheduleImage.objects.filter(pk=img.pk).update(
+            created_at=timezone.now() - timedelta(days=40))
+
+        with patch('schedule.cleanup.default_storage') as storage:
+            storage.exists.side_effect = PermissionError('read-only fs')
+            result = cleanup_old_images(days=30)
+
+        self.assertEqual(result['skipped'], 1)
+        self.assertEqual(result['rows'], 0)
+        self.assertTrue(ScheduleImage.objects.filter(pk=img.pk).exists(),
+                        'строка должна дожить до следующего прогона')

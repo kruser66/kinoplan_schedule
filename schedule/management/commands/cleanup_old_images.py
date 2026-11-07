@@ -37,6 +37,7 @@ class Command(BaseCommand):
         result = cleanup_old_images(days=options['days'])
         self.stdout.write(self.style.SUCCESS(
             f"Удалено: {result['rows']} записей картинок, {result['files']} файлов "
-            f"(уже отсутствовали: {result['missing']}), "
+            f"(уже отсутствовали: {result['missing']}, "
+            f"пропущено сбоем IO: {result['skipped']}), "
             f"пустых недель: {result['schedules']}"
         ))

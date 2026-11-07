@@ -34,9 +34,9 @@ git fetch && git checkout master && git merge --ff-only wiki_mvp   # или merg
 .venv/bin/python manage.py migrate
 # применяет: wiki 0001-0005 (модели, приветственная статья, search_text,
 #           демо-контент для изучения)
-#           schedule 0002-0004 (created_at картинок + датировка по кинонеделе,
+#           schedule 0002-0005 (created_at картинок + датировка по кинонеделе,
 #           склейка дубликатов недель + unique (год, неделя) — на 117k строк
-#           может занять минуту-другую)
+#           может занять минуту-другую — + индекс created_at для очистки)
 # Эффект на данных: у старых картинок проставится возраст; при ближайшем
 # логине картинки старше 30 дней автоудалятся (файлы из media тоже).
 
@@ -77,9 +77,10 @@ git fetch && git checkout master && git merge --ff-only wiki_mvp   # или merg
 
 ```bash
 git checkout master@{до merge}   # или git revert коммитов
-.venv/bin/python manage.py migrate wiki 0001   # полный откат wiki-миграций (0005->0001, обратимы)
-                                              # 0004->0001 откатит только миграцию 0005,
-                                              # welcome-статья из 0002 при этом останется
+# откат только демо-контента (welcome-статья 0002 остаётся на месте):
+.venv/bin/python manage.py migrate wiki 0004
+# полный откат вики (ОСТОРОЖНО: вместе с 0002 удалится и welcome-статья):
+.venv/bin/python manage.py migrate wiki 0001
 cp backup-before-wiki-DATE.sqlite3 db.sqlite3  # полный откат по бэкапу
 sudo systemctl restart <gunicorn-юнит>
 ```
@@ -96,4 +97,4 @@ sudo systemctl restart <gunicorn-юнит>
 - Модель `Schedule` — «бирка недели» (год+неделя), картинки в `ScheduleImage`; запись создаётся
   только при генерации (POST), просмотр — только чтение. Unique (год, неделя); дубликаты
   с прошлых лет склеивает миграция schedule 0004 (картинки переносятся, файлы не трогаем).
-- Тесты: 40 шт (`manage.py test schedule wiki`); тест выгрузки БД — TransactionTestCase (в TestCase backup API виснет из-за открытой транзакции).
+- Тесты: 41 шт (`manage.py test schedule wiki`); тест выгрузки БД — TransactionTestCase (в TestCase backup API виснет из-за открытой транзакции).

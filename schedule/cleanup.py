@@ -8,6 +8,7 @@
 случайный ранний логин не подвесил вход, пустые недели удаляются пачками,
 а когда чистить нечего — лишний запрос не выполняется вовсе.
 """
+import logging
 from datetime import timedelta
 
 from django.core.files.storage import default_storage
@@ -15,8 +16,11 @@ from django.utils import timezone
 
 from schedule.models import Schedule, ScheduleImage
 
+logger = logging.getLogger(__name__)
+
 STORAGE_DAYS = 30
-DELETE_BATCH = 1000
+# 500, а не 1000: на SQLite < 3.32 лимит 999 переменных на запрос
+DELETE_BATCH = 500
 
 
 def cleanup_empty_schedules(dry_run=False):
@@ -39,7 +43,7 @@ def cleanup_empty_schedules(dry_run=False):
 def cleanup_old_images(days=STORAGE_DAYS, dry_run=False):
     """Возвращает dict(rows=..., files=..., missing=..., schedules=...)."""
     cutoff = timezone.now() - timedelta(days=days)
-    result = {'rows': 0, 'files': 0, 'missing': 0}
+    result = {'rows': 0, 'files': 0, 'missing': 0, 'skipped': 0}
 
     if dry_run:
         result['rows'] = ScheduleImage.objects.filter(created_at__lt=cutoff).count()
@@ -53,8 +57,14 @@ def cleanup_old_images(days=STORAGE_DAYS, dry_run=False):
                 result['files'] += 1
             else:
                 result['missing'] += 1  # файла и так нет — запись всё равно чистим
+        except FileNotFoundError:
+            result['missing'] += 1
         except OSError:
-            result['missing'] += 1  # сбой диска не повод бросать весь прогон
+            # реальная IO-неполадка (read-only fs, права): файл, возможно, жив —
+            # строку НЕ удаляем, иначе файл сиротеет навсегда; прогон продолжается
+            logger.warning('Чистка: сбой IO на %s, запись пропущена', img.image.name)
+            result['skipped'] += 1
+            continue
         img.delete()
         result['rows'] += 1
 
