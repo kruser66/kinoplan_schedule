@@ -15,9 +15,10 @@ class CategoryTests(TestCase):
         self.assertEqual(parent.children_deep_count(), 0)
 
     def test_slug_conflict_gets_suffix(self):
-        Category.objects.create(name='Помощь')
-        second = Category.objects.create(name='Помощь!')
-        self.assertEqual(second.slug, 'помощь-2')
+        # имя берём уникальное, чтобы не пересекаться с демо-контентом из миграции
+        Category.objects.create(name='Тестовый конфликт')
+        second = Category.objects.create(name='Тестовый конфликт!')
+        self.assertEqual(second.slug, 'тестовый-конфликт-2')
 
     def test_article_protects_category(self):
         from django.db.models import ProtectedError
@@ -43,7 +44,7 @@ class ArticleTests(TestCase):
 
     def test_tags(self):
         a = Article.objects.create(title='X', category=self.cat, body='t')
-        a.tags.add(Tag.objects.create(name='касса'))
+        a.tags.add(Tag.objects.get_or_create(name='касса')[0])
         self.assertEqual(str(a.tags.first()), '#касса')
 
 
@@ -82,7 +83,7 @@ class WikiViewTests(TestCase):
 
     def test_tag_page_filters_articles(self):
         from wiki.models import Tag
-        t = Tag.objects.create(name='возврат')
+        t, _ = Tag.objects.get_or_create(name='возврат')
         self.article.tags.add(t)
         other = Article.objects.create(
             title='Уникальная другая статья', category=self.cat, body='текст без тега')
@@ -162,4 +163,23 @@ class DbBackupDownloadTests(TransactionTestCase):
         body = b''.join(response.streaming_content)
         self.assertTrue(body.startswith(b'SQLite format 3'))
         self.assertGreater(len(body), 0)
+
+
+class DemoSeedTests(TestCase):
+    """Тестовая БД строится миграциями с нуля — проверяем, что на чистом проде
+    после migrate сразу есть учебный демо-контент."""
+
+    def test_demo_content_seeded_by_migrations(self):
+        self.assertGreaterEqual(Category.objects.count(), 5)
+        self.assertGreaterEqual(Article.objects.count(), 6)
+        self.assertTrue(Article.objects.filter(title='Частые вопросы').exists())
+        child = Category.objects.filter(slug='возврат-и-обмен-билетов').first()
+        self.assertIsNotNone(child, 'вложенная категория должна существовать')
+        self.assertEqual(child.parent.slug, 'касса')
+
+    def test_demo_articles_searchable(self):
+        """Демо-статьи находятся поиском (search_text заполнен в миграции)."""
+        from django.db.models import Q
+        self.assertTrue(Article.objects.filter(
+            Q(search_text__contains='x-отчёт')).exists())
 
