@@ -24,7 +24,7 @@
              value="{{ query|default:'' }}" aria-label="Поиск">
     </form>
     <div class="ms-auto d-flex align-items-center gap-2 flex-shrink-0">
-      <a class="btn btn-wiki-ghost btn-sm" href="{% url 'index' %}" title="Портал и расписание">📅 Расписание</a>
+      <a class="btn btn-wiki-ghost btn-sm" href="{% url 'current_week' %}" title="Текущая неделя расписания">📅 Расписание</a>
       {% if user.is_staff %}
         <a class="btn btn-wiki btn-sm" href="{% url 'admin:wiki_article_add' %}">＋ Новая статья</a>
       {% endif %}
