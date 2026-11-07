@@ -1,0 +1,16 @@
+{% load wiki_extras %}
+<ul class="list-unstyled mb-0">
+  {% for cat in cats %}
+    <li>
+      <a href="{{ cat.get_absolute_url }}" {% if nav_active == cat.slug %}class="active"{% endif %}>
+        <span><span class="dot">●</span>{{ cat.name }}</span>
+        <span class="count">{{ cat.children_deep_count }}</span>
+      </a>
+      {% with children=cat.children.all %}
+        {% if children %}
+          {% include 'wiki/_nav_tree.html' with cats=children %}
+        {% endif %}
+      {% endwith %}
+    </li>
+  {% endfor %}
+</ul>

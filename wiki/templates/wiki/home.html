@@ -1,30 +1,41 @@
-{% extends 'base.html' %}
-{% block title %}База знаний{% endblock %}
-{% block content %}
-  <div class="h4 pb-2 mb-4 text-success border-bottom border-success">База знаний</div>
+{% extends 'wiki/base_wiki.html' %}
+{% load wiki_extras %}
+{% block title %}Все статьи — База знаний{% endblock %}
+{% block wiki_page %}
+  {% wiki_article_total as total %}
+  {% wiki_category_total as cats_total %}
+  <div class="wiki-eyebrow">База знаний</div>
+  <div class="wiki-page-title-row">
+    <h1>Все статьи</h1>
+    <span class="wiki-page-meta">
+      {{ total }} {{ total|pluralize:'статья,статьи' }} · {{ cats_total }} {{ cats_total|pluralize:'категория,категории' }}
+    </span>
+  </div>
 
-  {% include 'wiki/_searchbar.html' %}
+  <div class="wiki-chips">
+    <a class="wiki-chip active" href="{% url 'wiki:home' %}"><span class="dot"></span>Все</a>
+    {% for cat in categories %}
+      <a class="wiki-chip" href="{{ cat.get_absolute_url }}"><span class="dot"></span>{{ cat.name }}</a>
+    {% endfor %}
+  </div>
 
-  {% if categories %}
-    <div class="mb-4">
-      {% for cat in categories %}
-        <a class="btn btn-outline-success btn-sm me-1" href="{{ cat.get_absolute_url }}">{{ cat.name }} ({{ cat.children_deep_count }})</a>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <div class="row mb-4 justify-content-center">
+  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
     {% for article in articles %}
-      <div class="col-md-4 mb-3">
-        <div class="card h-100 text-start">
-          <div class="card-body">
-            <div class="text-success small mb-1">{{ article.category.name }} · {{ article.updated_at|date:'d.m.Y' }}</div>
-            <h5 class="card-title"><a class="text-decoration-none" href="{{ article.get_absolute_url }}">{{ article.title }}</a></h5>
-            <p class="card-text text-secondary small">{{ article.excerpt }}</p>
+      <div class="col">
+        <div class="wiki-card">
+          <div class="wiki-card-top">
+            <a class="wiki-cat-badge" href="{{ article.category.get_absolute_url }}">{{ article.category.name }}</a>
+            <span class="wiki-date">{{ article.updated_at|friendly_date }}</span>
           </div>
-          <div class="card-footer text-secondary small bg-transparent">
-            ~{{ article.reading_time }} мин
-            {% for t in article.tags.all %}<a class="text-decoration-none" href="{% url 'wiki:tag' t.slug %}"> #{{ t.name }}</a>{% endfor %}
+          <h3><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h3>
+          <p class="excerpt">{{ article.excerpt }}</p>
+          <div class="wiki-card-foot">
+            <span>🕐 ~{{ article.reading_time }} мин</span>
+            <span>
+              {% for t in article.tags.all %}
+                <a class="wiki-tag" href="{% url 'wiki:tag' t.slug %}">#{{ t.name }}</a>
+              {% endfor %}
+            </span>
           </div>
         </div>
       </div>

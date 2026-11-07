@@ -1,0 +1,83 @@
+{% load static wiki_extras %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}База знаний{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+  <link rel="stylesheet" href="{% static 'wiki/wiki.css' %}">
+</head>
+<body class="wiki-root">
+  <header class="wiki-topbar">
+    <button class="btn btn-wiki-ghost btn-sm d-lg-none" type="button"
+            data-bs-toggle="collapse" data-bs-target="#wikiNav" aria-controls="wikiNav">☰</button>
+    <a class="wiki-brand" href="{% url 'wiki:home' %}">
+      <span class="wiki-brand-icon">📖</span>
+      <span>
+        <div class="wiki-brand-title">База знаний</div>
+        <div class="wiki-brand-sub">wiki &amp; docs</div>
+      </span>
+    </a>
+    <form class="wiki-search d-none d-sm-block" action="{% url 'wiki:search' %}" method="get" role="search">
+      <span class="wiki-search-icon">⌕</span>
+      <input type="search" name="q" class="form-control" placeholder="Поиск по базе знаний…"
+             value="{{ query|default:'' }}" aria-label="Поиск">
+    </form>
+    <div class="ms-auto d-flex align-items-center gap-2 flex-shrink-0">
+      <a class="btn btn-wiki-ghost btn-sm" href="{% url 'index' %}" title="Портал и расписание">📅 Расписание</a>
+      {% if user.is_staff %}
+        <a class="btn btn-wiki btn-sm" href="{% url 'admin:wiki_article_add' %}">＋ Новая статья</a>
+      {% endif %}
+      <span class="wiki-user-chip d-none d-md-inline-flex">
+        <span class="wiki-avatar">{{ user.username|first|upper }}</span>{{ user.username }}
+      </span>
+    </div>
+  </header>
+
+  <div class="wiki-layout">
+    <aside class="wiki-sidebar collapse d-lg-block" id="wikiNav">
+      <div>
+        <div class="wiki-nav-label">Навигация</div>
+        <nav class="wiki-nav">
+          <a href="{% url 'wiki:home' %}" {% if nav_active == 'all' %}class="active"{% endif %}>
+            <span>🗂 Все статьи</span><span class="count">{% wiki_article_total %}</span>
+          </a>
+        </nav>
+      </div>
+      <div>
+        <div class="wiki-nav-label">Категории</div>
+        <nav class="wiki-nav">
+          {% wiki_root_categories as roots %}
+          {% include 'wiki/_nav_tree.html' with cats=roots %}
+        </nav>
+      </div>
+      <div class="wiki-user-card">
+        <span class="wiki-avatar">{{ user.username|first|upper }}</span>
+        <span class="who">
+          <div class="name">{{ user.get_full_name|default:user.username }}</div>
+          <div class="role">{% if user.is_staff %}Полный доступ{% else %}Только чтение{% endif %}</div>
+        </span>
+        <form action="{% url 'logout' %}" method="POST" title="Выйти">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-wiki-ghost px-2">⎋</button>
+        </form>
+      </div>
+    </aside>
+
+    <main class="wiki-main">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      {% block wiki_page %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

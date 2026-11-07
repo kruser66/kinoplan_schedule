@@ -1,33 +1,44 @@
-{% extends 'base.html' %}
+{% extends 'wiki/base_wiki.html' %}
+{% load wiki_extras %}
 {% block title %}{{ category.name }} — База знаний{% endblock %}
-{% block content %}
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb justify-content-center">
-      <li class="breadcrumb-item"><a href="{% url 'wiki:home' %}">База знаний</a></li>
-      {% for crumb in category.breadcrumbs %}
-        <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
-          {% if forloop.last %}{{ crumb.name }}{% else %}<a href="{{ crumb.get_absolute_url }}">{{ crumb.name }}</a>{% endif %}
-        </li>
-      {% endfor %}
-    </ol>
+{% block wiki_page %}
+  <nav class="wiki-breadcrumbs">
+    <a href="{% url 'wiki:home' %}">База знаний</a>
+    {% for crumb in category.breadcrumbs %}
+      <span class="sep">›</span>
+      {% if forloop.last %}
+        <span class="current">{{ crumb.name }}</span>
+      {% else %}
+        <a href="{{ crumb.get_absolute_url }}">{{ crumb.name }}</a>
+      {% endif %}
+    {% endfor %}
   </nav>
 
-  <div class="h4 pb-2 mb-4 text-success border-bottom border-success">{{ category.name }}</div>
-
-  <ul class="list-group mb-4" style="max-width: 720px; margin: 0 auto;">
-    {% for article in articles %}
-      <li class="list-group-item text-start">
-        <a class="text-decoration-none fw-semibold" href="{{ article.get_absolute_url }}">{{ article.title }}</a>
-        <div class="text-secondary small">{{ article.excerpt }}</div>
-      </li>
-    {% empty %}
-      <li class="list-group-item text-secondary">В этой категории пока пусто.</li>
-    {% endfor %}
-  </ul>
+  <div class="wiki-eyebrow">Категория</div>
+  <div class="wiki-page-title-row">
+    <h1>{{ category.name }}</h1>
+    <span class="wiki-page-meta">{{ articles|length }} {{ articles|length|pluralize:'статья,статей' }} (со вложенными: {{ category.children_deep_count }})</span>
+  </div>
 
   {% with children=category.children.all %}
     {% if children %}
-      <p>{% for child in children %}<a class="btn btn-outline-success btn-sm me-1 mb-1" href="{{ child.get_absolute_url }}">{{ child.name }} ({{ child.children_deep_count }})</a>{% endfor %}</p>
+      <div class="wiki-chips">
+        {% for child in children %}
+          <a class="wiki-chip" href="{{ child.get_absolute_url }}"><span class="dot"></span>{{ child.name }} <span class="count-child">{{ child.children_deep_count }}</span></a>
+        {% endfor %}
+      </div>
     {% endif %}
   {% endwith %}
+
+  <div class="wiki-list">
+    {% for article in articles %}
+      <div class="wiki-list-item">
+        <a class="title" href="{{ article.get_absolute_url }}">{{ article.title }}</a>
+        <span class="wiki-date ms-2">{{ article.updated_at|friendly_date }}</span>
+        <p class="excerpt">{{ article.excerpt }}</p>
+      </div>
+    {% empty %}
+      <p class="text-secondary">В этой категории пока пусто.</p>
+    {% endfor %}
+  </div>
 {% endblock %}

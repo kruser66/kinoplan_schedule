@@ -1,29 +1,35 @@
-{% extends 'base.html' %}
+{% extends 'wiki/base_wiki.html' %}
+{% load wiki_extras %}
 {% block title %}{{ article.title }} — База знаний{% endblock %}
-{% block content %}
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb justify-content-center">
-      <li class="breadcrumb-item"><a href="{% url 'wiki:home' %}">База знаний</a></li>
-      {% for crumb in article.breadcrumbs %}
-        <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
-          {% if forloop.last %}{{ crumb.name }}{% else %}<a href="{{ crumb.get_absolute_url }}">{{ crumb.name }}</a>{% endif %}
-        </li>
-      {% endfor %}
-    </ol>
+{% block wiki_page %}
+  <nav class="wiki-breadcrumbs">
+    <a href="{% url 'wiki:home' %}">База знаний</a>
+    {% for crumb in article.breadcrumbs %}
+      <span class="sep">›</span>
+      {% if forloop.last %}
+        <span class="current">{{ crumb.name }}</span>
+      {% else %}
+        <a href="{{ crumb.get_absolute_url }}">{{ crumb.name }}</a>
+      {% endif %}
+    {% endfor %}
   </nav>
 
-  <div class="mx-auto text-start mb-4" style="max-width: 800px;">
-    <h2 class="text-success">{{ article.title }}</h2>
-    <p class="text-secondary small">
-      {{ article.category.name }} · изменена {{ article.updated_at|date:'d.m.Y H:i' }}
+  <article class="wiki-article">
+    <h1>{{ article.title }}</h1>
+    <p class="meta">
+      {{ article.category.name }} · изменена {{ article.updated_at|friendly_date }}
       {% if article.author %} · автор: {{ article.author.username }}{% endif %}
-      {% for t in article.tags.all %}<a class="badge text-bg-secondary text-decoration-none" href="{% url 'wiki:tag' t.slug %}">#{{ t.name }}</a>{% endfor %}
+      {% for t in article.tags.all %}
+        <a class="badge-wiki-tag" href="{% url 'wiki:tag' t.slug %}">#{{ t.name }}</a>
+      {% endfor %}
     </p>
-    <hr>
-    <div class="wiki-body">{{ body_html|safe }}</div>
+    <div class="wiki-article-body">{{ body_html|safe }}</div>
     {% if user.is_staff %}
-  <hr>
-  <a class="btn btn-outline-success btn-sm" href="{% url 'admin:wiki_article_change' article.id %}">✏️ Редактировать (админка)</a>
-{% endif %}
-  </div>
+      <hr class="my-4">
+      <div class="d-flex gap-2">
+        <a class="btn btn-wiki-ghost btn-sm" href="{% url 'admin:wiki_article_change' article.id %}">✏️ Редактировать (админка)</a>
+        <a class="btn btn-wiki-ghost btn-sm" href="{% url 'admin:wiki_article_add' %}">＋ Новая статья</a>
+      </div>
+    {% endif %}
+  </article>
 {% endblock %}

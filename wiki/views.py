@@ -12,6 +12,7 @@ def home(request):
     return render(request, 'wiki/home.html', {
         'categories': categories,
         'articles': articles,
+        'nav_active': 'all',
     })
 
 
@@ -35,6 +36,7 @@ def category_page(request, slug):
     return render(request, 'wiki/article_list.html', {
         'category': category,
         'articles': category.articles.filter(is_draft=False),
+        'nav_active': category.slug,
     })
 
 
