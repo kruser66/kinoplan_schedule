@@ -18,6 +18,12 @@
           <div class="d-flex align-items-center">
             {% block navbar_extra %}{% endblock %}
             {% if user.is_authenticated %}
+              <div class="btn-group me-3" role="group" aria-label="Разделы">
+                <a class="btn btn-sm btn-outline-success {% if request.resolver_match.app_names and 'wiki' not in request.resolver_match.app_names %}active{% endif %}"
+                   href="{% url 'index' %}" title="Расписание">📅 Расписание</a>
+                <a class="btn btn-sm btn-outline-success {% if 'wiki' in request.resolver_match.app_names %}active{% endif %}"
+                   href="{% url 'wiki:home' %}" title="База знаний">📚 База знаний</a>
+              </div>
               <span class="text-success me-3" style="font-weight: 500;">
                 👋 Привет, {{ user.username }}!
               </span>

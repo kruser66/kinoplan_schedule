@@ -1,0 +1,7 @@
+<form action="{% url 'wiki:search' %}" method="get" class="d-flex justify-content-center mb-4" role="search">
+  <div class="input-group" style="max-width: 480px;">
+    <input type="search" name="q" class="form-control" placeholder="Поиск по базе знаний…"
+           value="{{ query|default:'' }}" aria-label="Поиск">
+    <button class="btn btn-success" type="submit">Найти</button>
+  </div>
+</form>

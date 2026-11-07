@@ -16,6 +16,20 @@ def home(request):
 
 
 @login_required
+def search(request):
+    query = request.GET.get('q', '').strip()
+    articles = Article.objects.filter(is_draft=False)
+    if query:
+        # search_text хранится в нижнем регистре (см. Article.save) —
+        # иначе SQLite не находит кириллицу без учёта регистра.
+        articles = articles.filter(search_text__contains=query.lower())
+    return render(request, 'wiki/search_results.html', {
+        'query': query,
+        'articles': articles,
+    })
+
+
+@login_required
 def category_page(request, slug):
     category = get_object_or_404(Category, slug=slug)
     return render(request, 'wiki/article_list.html', {

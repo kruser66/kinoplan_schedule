@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Поиск{% if query %}: {{ query }}{% endif %} — База знаний{% endblock %}
+{% block content %}
+  <div class="h4 pb-2 mb-4 text-success border-bottom border-success">База знаний</div>
+  {% include 'wiki/_searchbar.html' %}
+
+  {% if query %}
+    <p class="text-secondary">Найдено статей: {{ articles|length }} по запросу «{{ query }}»</p>
+  {% endif %}
+
+  <ul class="list-group mb-4 mx-auto" style="max-width: 720px;">
+    {% for article in articles %}
+      <li class="list-group-item text-start">
+        <a class="text-decoration-none fw-semibold" href="{{ article.get_absolute_url }}">{{ article.title }}</a>
+        <span class="badge text-bg-light border ms-1">{{ article.category.name }}</span>
+        <div class="text-secondary small">{{ article.excerpt }}</div>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-secondary">
+        {% if query %}Ничего не найдено. Попробуйте другое слово.{% else %}Введите запрос в поле выше.{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  <p class="text-center"><a class="btn btn-link" href="{% url 'wiki:home' %}">← Все статьи</a></p>
+{% endblock %}

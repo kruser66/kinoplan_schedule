@@ -85,6 +85,25 @@ class WikiViewTests(TestCase):
         self.client.force_login(self.kassir)
         self.assertEqual(self.client.get(draft.get_absolute_url()).status_code, 404)
 
+    def test_search_finds_by_title_and_body(self):
+        self.client.force_login(self.kassir)
+        r1 = self.client.get(reverse('wiki:search'), {'q': 'смену'})
+        self.assertContains(r1, 'Как открыть смену')
+        r2 = self.client.get(reverse('wiki:search'), {'q': 'касс'})
+        self.assertContains(r2, 'Как открыть смену')  # нашёл по тексту (подстрока «кассy»), не по заголовку
+        r3 = self.client.get(reverse('wiki:search'), {'q': 'нет-такого'})
+        self.assertContains(r3, 'Ничего не найдено')
+
+    def test_search_case_insensitive_cyrillic(self):
+        """Регресс: SQLite icontains не работает для кириллицы — проверяем разные регистры."""
+        self.client.force_login(self.kassir)
+        for q in ('КАК ОТКРЫТЬ', 'Как Открыть', 'как открыть', 'СМЕНУ'):
+            response = self.client.get(reverse('wiki:search'), {'q': q})
+            self.assertContains(response, 'Как открыть смену', msg_prefix=f'запрос: {q}')
+
+    def test_search_requires_login(self):
+        self.assertEqual(self.client.get(reverse('wiki:search')).status_code, 302)
+
     def test_edit_button_only_for_staff(self):
         self.client.force_login(self.kassir)
         self.assertNotContains(self.client.get(self.article.get_absolute_url()), 'Редактировать')

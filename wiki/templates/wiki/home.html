@@ -3,6 +3,8 @@
 {% block content %}
   <div class="h4 pb-2 mb-4 text-success border-bottom border-success">База знаний</div>
 
+  {% include 'wiki/_searchbar.html' %}
+
   {% if categories %}
     <div class="mb-4">
       {% for cat in categories %}

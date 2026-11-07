@@ -84,6 +84,7 @@ class Article(models.Model):
         on_delete=models.PROTECT, related_name='articles',
     )
     body = models.TextField('Текст (markdown)')
+    search_text = models.TextField('Поисковый текст', blank=True, default='', editable=False)
     tags = models.ManyToManyField(Tag, verbose_name='Теги', blank=True)
     is_draft = models.BooleanField('Черновик', default=False)
     author = models.ForeignKey(
@@ -101,6 +102,9 @@ class Article(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = _unique_slug(Article, 'slug', self.title, pk=self.pk)
+        # Поиск: SQLite не умеет регистронезависимый LIKE для кириллицы,
+        # поэтому храним нормализованный нижний регистр (Python справляется корректно).
+        self.search_text = f'{self.title}\n{self.body}'.lower()
         super().save(*args, **kwargs)
 
     def __str__(self):
