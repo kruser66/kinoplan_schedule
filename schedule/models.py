@@ -17,6 +17,7 @@ class ScheduleImage(models.Model):
     schedule = models.ForeignKey(Schedule, related_name='images', on_delete=models.CASCADE)
     title = models.CharField('Период расписания', max_length=50)
     image = models.ImageField('Заполненный шаблон расписания')
+    created_at = models.DateTimeField('Создана', auto_now_add=True, null=True, blank=True)
 
     class Meta:
         verbose_name = 'картика расписания'

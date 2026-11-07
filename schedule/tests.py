@@ -1,6 +1,13 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.core.files.base import ContentFile
+from django.core.management import call_command
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
+
+from schedule.models import Schedule, ScheduleImage
 
 
 class PortalTests(TestCase):
@@ -25,3 +32,43 @@ class PortalTests(TestCase):
 
     def test_wiki_still_requires_login(self):
         self.assertEqual(self.client.get(reverse('wiki:home')).status_code, 302)
+
+
+@override_settings(MEDIA_ROOT='/tmp/opencode/test_media')
+class CleanupOldImagesTests(TestCase):
+    def setUp(self):
+        User.objects.create_user(username='login_user', password='pass12345')
+
+    def _make_image(self, schedule, age_days):
+        img = ScheduleImage(schedule=schedule, title=f'test-{age_days}')
+        img.image.save(f'test-{age_days}.jpg', ContentFile(b'fake-jpeg'), save=True)
+        ScheduleImage.objects.filter(pk=img.pk).update(
+            created_at=timezone.now() - timedelta(days=age_days))
+        return img
+
+    def test_login_triggers_cleanup(self):
+        schedule = Schedule.objects.create(year=2026, week=39)
+        old = self._make_image(schedule, 40)
+        self.assertTrue(self.client.login(username='login_user', password='pass12345'))
+        self.assertFalse(ScheduleImage.objects.filter(pk=old.pk).exists())
+
+    def test_old_images_deleted_new_kept(self):
+        schedule = Schedule.objects.create(year=2026, week=40)
+        old = self._make_image(schedule, 45)
+        fresh = self._make_image(schedule, 10)
+
+        call_command('cleanup_old_images', '--days', '30')
+
+        self.assertFalse(ScheduleImage.objects.filter(pk=old.pk).exists())
+        self.assertTrue(ScheduleImage.objects.filter(pk=fresh.pk).exists())
+        from django.core.files.storage import default_storage
+        self.assertFalse(default_storage.exists(old.image.name))
+        self.assertTrue(default_storage.exists(fresh.image.name))
+
+    def test_dry_run_keeps_everything(self):
+        schedule = Schedule.objects.create(year=2026, week=41)
+        old = self._make_image(schedule, 60)
+
+        call_command('cleanup_old_images', '--days', '30', '--dry-run')
+
+        self.assertTrue(ScheduleImage.objects.filter(pk=old.pk).exists())
