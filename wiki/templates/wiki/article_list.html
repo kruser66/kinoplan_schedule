@@ -17,7 +17,7 @@
   <div class="wiki-eyebrow">Категория</div>
   <div class="wiki-page-title-row">
     <h1>{{ category.name }}</h1>
-    <span class="wiki-page-meta">{{ articles|length }} {{ articles|length|pluralize:'статья,статей' }} (со вложенными: {{ category.children_deep_count }})</span>
+    <span class="wiki-page-meta">{{ articles|length }} {{ articles|length|pluralize:'статья,статьи' }} (со вложенными: {{ category.children_deep_count }})</span>
   </div>
 
   {% with children=category.children.all %}

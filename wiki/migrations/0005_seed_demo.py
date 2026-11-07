@@ -2,8 +2,9 @@
 
 Создаётся при деплое, чтобы было «с чего начинать» и видно, как оформлять статьи.
 Идемпотентна (get_or_create), обратима (unseed удаляет только демо-сущности).
-Удалить демо с прода навсегда: manage.py migrate wiki 0004 (и свои статьи не пострадают,
-кроме welcome-статьи из 0002 — её откатит 0004 тоже).
+Удалить демо с прода: manage.py migrate wiki 0004 — откатит только эту миграцию
+(welcome-статья из 0002 останется, её удалять в админке); либо снести демо-статьи
+и категории галочками в админке.
 """
 import datetime
 
@@ -21,14 +22,17 @@ def _slug(Model, title, slug_field='slug'):
 
 
 DEMO_CATEGORY_SLUGS = ['помощь', 'работа-с-контентом', 'касса', 'возврат-и-обмен-билетов']
-DEMO_ARTICLE_SLUGS = [
-    'kak-dobavit-izobrazhenie-v-statyu',
-    'oformlenie-i-struktura-stati',
-    'chastye-voprosy',
-    'otkrytie-i-zakrytie-smeny',
-    'vozvrat-bileta-zritelyu',
+# слаги демо-статей при allow_unicode кириллические и могут получить суффикс
+# -2 при коллизии — удаляем по заголовкам, они у seed стабильные (get_or_create по ним)
+DEMO_ARTICLE_TITLES = [
+    'Как добавить изображение в статью',
+    'Оформление и структура статьи',
+    'Частые вопросы',
+    'Открытие и закрытие смены',
+    'Возврат билета зрителю',
 ]
-DEMO_TAG_NAMES = ['старт', 'навигация', 'редактор', 'форматирование', 'faq',
+# ровно те теги, что создаёт seed (несовпадение с art() = враньё в откате)
+DEMO_TAG_NAMES = ['навигация', 'редактор', 'форматирование', 'faq',
                   'данные', 'касса', 'смены', 'возврат']
 
 
@@ -147,7 +151,7 @@ def unseed(apps, schema_editor):
     Category = apps.get_model('wiki', 'Category')
     Tag = apps.get_model('wiki', 'Tag')
     Article = apps.get_model('wiki', 'Article')
-    Article.objects.filter(slug__in=DEMO_ARTICLE_SLUGS).delete()
+    Article.objects.filter(title__in=DEMO_ARTICLE_TITLES).delete()
     Category.objects.filter(slug__in=DEMO_CATEGORY_SLUGS).delete()
     Tag.objects.filter(name__in=DEMO_TAG_NAMES).delete()
 

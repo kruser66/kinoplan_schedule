@@ -25,4 +25,6 @@ class ScheduleConfig(AppConfig):
     name = 'schedule'
 
     def ready(self):
-        user_logged_in.connect(cleanup_on_login)
+        # dispatch_uid: без него autoreload/повторная инициализация
+        # регистрируют обработчик дважды — и чистка бегает дважды за логин
+        user_logged_in.connect(cleanup_on_login, dispatch_uid='schedule_auto_cleanup')

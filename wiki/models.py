@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
@@ -35,6 +36,21 @@ class Category(models.Model):
         if not self.slug:
             self.slug = _unique_slug(Category, 'slug', self.name, pk=self.pk)
         super().save(*args, **kwargs)
+
+    def clean(self):
+        """Запрет цикла parent (cat A -> B -> A): иначе breadcrumbs() уходит в
+        бесконечный while, а children_deep_count() — в RecursionError, т.е.
+        500/висячий запрос на любой странице вики с деревом."""
+        super().clean()
+        if self.parent_id and self.pk:
+            node, seen = self.parent, {self.pk}
+            while node is not None:
+                if node.pk in seen:
+                    raise ValidationError(
+                        {'parent': 'Категория не может быть своей собственной '
+                                   'подкатегорией (получился цикл).'})
+                seen.add(node.pk)
+                node = node.parent
 
     def __str__(self):
         return self.name

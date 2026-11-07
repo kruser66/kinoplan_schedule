@@ -1,4 +1,6 @@
+from django.contrib import admin
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db.models import ProtectedError, Q
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
@@ -180,4 +182,61 @@ class DemoSeedTests(TestCase):
         """Демо-статьи находятся поиском (search_text заполнен в миграции)."""
         self.assertTrue(Article.objects.filter(
             Q(search_text__contains='x-отчёт')).exists())
+
+    def test_unseed_removes_demo_and_keeps_user_content(self):
+        """Откат 0005 реально чистит демо (по заголовкам) и не трогает своё."""
+        import importlib
+        from django.apps import apps
+        seed_demo = importlib.import_module('wiki.migrations.0005_seed_demo')
+
+        mine = Category.objects.create(name='Моя папка')
+        my_article = Article.objects.create(title='Моя инструкция', category=mine,
+                                            body='как у нас принято')
+        seed_demo.unseed(apps, None)
+
+        self.assertFalse(Article.objects.filter(title='Частые вопросы').exists())
+        self.assertFalse(Category.objects.filter(slug='касса').exists())
+        self.assertFalse(Tag.objects.filter(name='касса').exists())
+        self.assertTrue(Article.objects.filter(title='Моя инструкция').exists())
+        self.assertTrue(Article.objects.filter(
+            title__startswith='Добро').exists(), 'welcome из 0002 трогать нельзя')
+
+
+class AdminSearchTests(TestCase):
+    """Поиск админки на SQLite-проде: `icontains` по кириллице регистрозависим,
+    поэтому у админов кастомный get_search_results."""
+
+    def test_article_admin_finds_cyrillic_in_any_case(self):
+        from wiki.admin import ArticleAdmin
+        ma = ArticleAdmin(Article, admin.site)
+        found, _ = ma.get_search_results(None, Article.objects.all(), 'добро')
+        self.assertTrue(found.filter(title__startswith='Добро').exists(),
+                        'строчное «добро» обязано находить «Добро…»')
+
+    def test_category_admin_finds_cyrillic_in_any_case(self):
+        from wiki.admin import CategoryAdmin
+        Category.objects.create(name='Помощь покупателю')
+        ca = CategoryAdmin(Category, admin.site)
+        found, _ = ca.get_search_results(None, Category.objects.all(), 'помощь покупателю')
+        self.assertEqual([c.name for c in found], ['Помощь покупателю'])
+
+    def test_admin_search_like_wildcards_are_literal(self):
+        from wiki.admin import ArticleAdmin
+        ma = ArticleAdmin(Article, admin.site)
+        found, _ = ma.get_search_results(None, Article.objects.all(), '%')
+        self.assertFalse(found.exists(), '«%» не должен матчить всё подряд')
+
+
+class CategoryCycleTests(TestCase):
+    def test_parent_cycle_rejected_in_clean(self):
+        a = Category.objects.create(name='Альфа')
+        b = Category.objects.create(name='Бета', parent=a)
+        a.parent = b
+        with self.assertRaises(ValidationError):
+            a.clean()
+
+    def test_legal_nesting_passes_clean(self):
+        a = Category.objects.create(name='Альфа')
+        b = Category(name='Бета', parent=a)
+        b.full_clean(exclude=['slug'])  # без цикл-сценария — чисто
 

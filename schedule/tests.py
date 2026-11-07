@@ -114,3 +114,20 @@ class EmptySchedulePurgeTests(TestCase):
         Schedule.objects.create(year=2026, week=49)
         call_command('cleanup_old_images', '--days', '30', '--dry-run')
         self.assertTrue(Schedule.objects.filter(year=2026, week=49).exists())
+
+    def test_missing_file_counted_as_missing_not_files(self):
+        """Файла нет на диске -> missing, а не files (W-4)."""
+        from schedule.cleanup import cleanup_old_images
+        schedule = Schedule.objects.create(year=2026, week=50)
+        img = ScheduleImage(schedule=schedule, title='ghost')
+        img.image.name = 'ghost-absent-не-на-диске.jpg'  # файл не создаём
+        img.save()
+        ScheduleImage.objects.filter(pk=img.pk).update(
+            created_at=timezone.now() - timedelta(days=40))
+
+        result = cleanup_old_images(days=30)
+
+        self.assertEqual(result['missing'], 1)
+        self.assertEqual(result['files'], 0)
+        self.assertEqual(result['rows'], 1)
+        self.assertFalse(ScheduleImage.objects.filter(pk=img.pk).exists())
