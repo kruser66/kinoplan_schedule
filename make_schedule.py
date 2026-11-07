@@ -174,13 +174,15 @@ def show_schedule(year, week, selected_day, fixprice=False):
     }
 
     schedule_by_date_by_hall = {day: {
-            hall['title']: list(filter(lambda x: x['date'] == day and x['hall_id'] == hall['id'], schedule))
+            hall['title']: list(filter(
+                lambda x: x['date'] == day and x['hall_id'] == hall['id'], schedule))
             for hall in halls
         } for day in week_dates}
 
     formatted_schedule = formate_schedule(schedule_by_date_by_hall, serialized_films)
 
-    filtered_week = [day for index, day in enumerate(week_dates) if selected_day[index] == 1]
+    filtered_week = [day for index, day in enumerate(week_dates)
+                     if selected_day[index] == 1]
 
     return draw_schedule(filtered_week, formatted_schedule, fixprice)  # период 0 - четверг, 6 - среда
 

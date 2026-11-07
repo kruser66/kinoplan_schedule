@@ -86,7 +86,7 @@ class WikiViewTests(TestCase):
     def test_tag_page_filters_articles(self):
         t, _ = Tag.objects.get_or_create(name='возврат')
         self.article.tags.add(t)
-        other = Article.objects.create(
+        Article.objects.create(  # без тега — на странице тега быть не должна
             title='Уникальная другая статья', category=self.cat, body='текст без тега')
         self.client.force_login(self.kassir)
         response = self.client.get(reverse('wiki:tag', args=[t.slug]))
@@ -103,7 +103,7 @@ class WikiViewTests(TestCase):
         r1 = self.client.get(reverse('wiki:search'), {'q': 'смену'})
         self.assertContains(r1, 'Как открыть смену')
         r2 = self.client.get(reverse('wiki:search'), {'q': 'касс'})
-        self.assertContains(r2, 'Как открыть смену')  # нашёл по тексту (подстрока «кассy»), не по заголовку
+        self.assertContains(r2, 'Как открыть смену')  # по тексту, не по заголовку
         r3 = self.client.get(reverse('wiki:search'), {'q': 'нет-такого'})
         self.assertContains(r3, 'Ничего не найдено')
 
@@ -190,8 +190,8 @@ class DemoSeedTests(TestCase):
         seed_demo = importlib.import_module('wiki.migrations.0005_seed_demo')
 
         mine = Category.objects.create(name='Моя папка')
-        my_article = Article.objects.create(title='Моя инструкция', category=mine,
-                                            body='как у нас принято')
+        Article.objects.create(title='Моя инструкция', category=mine,
+                               body='как у нас принято')
         seed_demo.unseed(apps, None)
 
         self.assertFalse(Article.objects.filter(title='Частые вопросы').exists())
@@ -239,4 +239,3 @@ class CategoryCycleTests(TestCase):
         a = Category.objects.create(name='Альфа')
         b = Category(name='Бета', parent=a)
         b.full_clean(exclude=['slug'])  # без цикл-сценария — чисто
-

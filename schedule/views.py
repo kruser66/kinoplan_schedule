@@ -1,4 +1,6 @@
+import logging
 from datetime import date
+
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -13,6 +15,8 @@ from wiki.models import Article, Category
 
 
 KINO_WEEK = ['ЧТ', 'ПТ', 'СБ', 'ВС', 'ПН', 'ВТ', 'СР']
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -62,9 +66,10 @@ def week_schedule(request, year, week):
 
         if default_storage.exists(content_file.name):
             default_storage.delete(content_file.name)
-        
+
         title = content_file.name.split('.')[0]
-        ScheduleImage.objects.update_or_create(title=title, schedule=schedule, defaults={'image': content_file})
+        ScheduleImage.objects.update_or_create(
+            title=title, schedule=schedule, defaults={'image': content_file})
 
     context = {
         'kino_week': kino_week,
@@ -73,20 +78,22 @@ def week_schedule(request, year, week):
         'year': year,
         'week': week
     }
-    
+
     return render(request, 'index.html', context=context)
+
 
 @csrf_exempt
 @login_required
 def delete_image(request, pk):
-    
     try:
         image_for_deletion = ScheduleImage.objects.get(id=pk)
         filename = image_for_deletion.title + '.jpg'
         if default_storage.exists(filename):
             default_storage.delete(filename)
         image_for_deletion.delete()
-    except:
-        pass
-    
+    except Exception:
+        # картинку теряем, посетителя не переключаем на 500 (наследие мастера;
+        # раньше было голое except — PEP8 E722)
+        logger.exception('Не удалось удалить картинку id=%s', pk)
+
     return HttpResponseRedirect(request.GET['next'])

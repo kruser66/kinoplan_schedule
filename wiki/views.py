@@ -43,7 +43,9 @@ def db_backup(request):
     if not settings.DATABASES['default']['ENGINE'].endswith('sqlite3'):
         return HttpResponseForbidden('Автовыгрузка настроена только для SQLite')
 
-    connection.ensure_connection()  # connection.connection может быть None, если БД в этом запросе ещё не трогали
+    # connection.connection может быть None, если БД в этом запросе
+    # ещё не трогали — ensure_connection поднимает её явно
+    connection.ensure_connection()
     tmp = tempfile.NamedTemporaryFile(suffix='.sqlite3', delete=False)
     tmp.close()
     dst = sqlite3.connect(tmp.name)

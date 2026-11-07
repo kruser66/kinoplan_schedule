@@ -25,7 +25,8 @@ class Category(models.Model):
         on_delete=models.SET_NULL, null=True, blank=True,
         related_name='children',
     )
-    order = models.PositiveSmallIntegerField('Порядок', default=0, help_text='Меньше — выше в списке')
+    order = models.PositiveSmallIntegerField(
+        'Порядок', default=0, help_text='Меньше — выше в списке')
 
     class Meta:
         verbose_name = 'категория'
