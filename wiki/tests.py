@@ -44,6 +44,19 @@ class ArticleTests(TestCase):
         self.assertNotIn('#', a.excerpt())
         self.assertGreaterEqual(a.reading_time(), 2)
 
+    def test_preview_html_keeps_formatting(self):
+        a = Article.objects.create(
+            title='Инструкция', category=self.cat,
+            body='Вводный **абзац**.\n\n## Раздел\n\n- пункт **один**\n- пункт два\n\n'
+                 '![картинка](/media/x.png)\n\n' + ('длинный текст ' * 200),
+        )
+        html = a.preview_html
+        self.assertIn('<strong>', html)   # выделение живое, рендер как на странице
+        self.assertNotIn('<li>', html)    # списки/заголовки в анонс не берём — карточки ровные
+        self.assertNotIn('<h2>', html)
+        self.assertNotIn('<img', html)    # картинки тем более
+        self.assertEqual(html.count('<p>'), 1)  # один абзац — line-clamp честный
+
     def test_tags(self):
         a = Article.objects.create(title='X', category=self.cat, body='t')
         a.tags.add(Tag.objects.get_or_create(name='касса')[0])

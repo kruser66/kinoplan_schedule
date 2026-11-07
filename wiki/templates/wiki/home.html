@@ -28,7 +28,7 @@
             <span class="wiki-date">{{ article.updated_at|friendly_date }}</span>
           </div>
           <h3><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h3>
-          <p class="excerpt">{{ article.excerpt }}</p>
+          <div class="card-preview">{{ article.preview_html }}</div>
           <div class="wiki-card-foot">
             <span>🕐 ~{{ article.reading_time }} мин</span>
             <span>

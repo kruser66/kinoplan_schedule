@@ -20,7 +20,7 @@
         <a class="title" href="{{ article.get_absolute_url }}">{{ article.title }}</a>
         <span class="wiki-cat-badge ms-2">{{ article.category.name }}</span>
         <span class="wiki-date ms-2">{{ article.updated_at|friendly_date }}</span>
-        <p class="excerpt">{{ article.excerpt }}</p>
+        <div class="card-preview">{{ article.preview_html }}</div>
       </div>
     {% empty %}
       <p class="text-secondary">Со статьями этот тег пока ничего не связано.</p>

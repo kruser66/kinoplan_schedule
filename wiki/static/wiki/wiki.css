@@ -182,7 +182,16 @@
 .wiki-card h3 { font-size: 1.05rem; font-weight: 700; margin: 0; }
 .wiki-card h3 a { color: var(--w-text); text-decoration: none; }
 .wiki-card h3 a:hover { color: var(--w-primary-dark); }
-.wiki-card .excerpt { color: var(--w-muted); font-size: .87rem; margin: 0; flex: 1; }
+/* анонс в карточке: тот же рендер, что страница, но ровно 4 строки
+   с многоточием — все карточки одной высоты (line-clamp) */
+.card-preview {
+  color: var(--w-muted); font-size: .86rem; line-height: 1.45; flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-preview p { margin: 0; display: inline; }
+.card-preview a { color: var(--w-primary-dark); }
+.card-preview strong { color: var(--w-text); }
 .wiki-card-foot {
   display: flex; justify-content: space-between; align-items: center; gap: .5rem;
   border-top: 1px solid var(--w-border); padding-top: .55rem;
@@ -199,7 +208,7 @@
 }
 .wiki-list-item a.title { color: var(--w-text); font-weight: 700; text-decoration: none; }
 .wiki-list-item a.title:hover { color: var(--w-primary-dark); }
-.wiki-list-item .excerpt { color: var(--w-muted); font-size: .86rem; margin: .15rem 0 0; }
+.wiki-list-item .card-preview { -webkit-line-clamp: 3; }
 
 /* ---------- статья ---------- */
 .wiki-article {

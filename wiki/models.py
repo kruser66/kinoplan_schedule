@@ -1,7 +1,12 @@
+import re
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 from django.utils.text import slugify
+
+from wiki.render import render_markdown
 
 
 def _unique_slug(model, slug_field, title, pk=None):
@@ -134,12 +139,58 @@ class Article(models.Model):
         return self.category.breadcrumbs()
 
     def excerpt(self, length=200):
-        """Первые ~length символов чистого текста для карточки."""
-        text = ' '.join(self.body.split())
-        # грубая чистка markdown-разметки для превью
-        for ch in '#*`>[]()_':
-            text = text.replace(ch, '')
-        return text[:length] + '…' if len(text) > length else text
+        """Человеческое превью для карточки: читаемый текст, а не обломки разметки.
+
+        Бывало так, что превью выглядело как 'Как пользоваться - Слева —
+        категории': markdown-разметка просто вычиталась посимвольно, и от
+        '#*`>- ' оставались огрызки. Теперь чистка построчная:
+        код-блоки выкидываем, маркеры заголовков/цитат/списков снимаем,
+        ссылки оставляем текстом, всё склеиваем в аккуратную строку.
+        """
+        body = re.sub(r'```.*?```', ' ', self.body, flags=re.S)  # код-блоки врезать целиком
+        body = re.sub(r'`([^`]*)`', r'\1', body)                 # inline-код — без штрихов
+        body = re.sub(r'!?\[([^\]]*)\]\([^)]*\)', r'\1', body)   # ссылки/картинки — текстом
+        parts = []
+        for line in body.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            line = re.sub(r'^#{1,6}\s+', '', line)      # заголовки — просто строкой
+            line = re.sub(r'^>\s*', '', line)           # цитаты
+            line = re.sub(r'^(?:[-*+]|\d+[.)])\s+', '', line)  # маркеры списков
+            line = re.sub(r'\*\*(.+?)\*\*|\*([^*]+)\*|__?(.+?)__?', lambda m: m.group(1) or m.group(2) or m.group(3) or '', line)
+            parts.append(line.strip())
+        text = ' '.join(' '.join(parts).split())
+        return text[:length].rstrip(' ,;.') + '…' if len(text) > length else text
+
+    @property
+    def preview_html(self):
+        """Карточка — это карточка: ровный анонс в пару строк, а не «портянка».
+
+        Берём только вступительные абзацы (без заголовков, списков, цитат,
+        таблиц — они делали карточки разношерстными по высоте), склеиваем в
+        один абзац и рендерим ТЕМ же markdown+bleach, что и страницу: в
+        карточке живое выделение и ссылки, но форма карточки едина.
+        Обрезка до 3-4 строк — CSS (line-clamp), многоточие честное.
+        """
+        body = re.sub(r'```.*?```', '', self.body, flags=re.S)
+        body = re.sub(r'!\[[^\]]*\]\([^)]*\)', '', body)  # картинки в анонс не лезут
+
+        def is_prose(s):  # не заголовок/цитата/список/таблица/HTML
+            return not re.match(r'^(#{1,6}\s|>|[-*+]\s|\d+[.)]\s|\||<)', s)
+        blocks, total = [], 0
+        for block in re.split(r'\n\s*\n', body.strip()):
+            block = block.strip()
+            if not block or not is_prose(block):
+                continue
+            blocks.append(block)
+            total += len(block)
+            if total >= 260:
+                break
+        if not blocks:  # статья сразу со списка/таблицы — показываем хоть что-то
+            blocks = [b.strip() for b in re.split(r'\n\s*\n', body.strip()) if b.strip()][:1]
+        # склейка через \n = мягкий перенос: markdown соберёт один <p>
+        return mark_safe(render_markdown('\n'.join(blocks)))
 
     def reading_time(self):
         words = len(self.body.split())
