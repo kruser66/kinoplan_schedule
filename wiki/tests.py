@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
 from wiki.models import Article, Category, Tag
@@ -121,4 +121,45 @@ class WikiViewTests(TestCase):
         boss = User.objects.create_user(username='boss2', password='x', is_staff=True)
         self.client.force_login(boss)
         self.assertContains(self.client.get(self.article.get_absolute_url()), 'Редактировать')
+
+
+class AccountBackupTests(TestCase):
+    def setUp(self):
+        self.kassir = User.objects.create_user(username='kassir3', password='x')
+        self.admin = User.objects.create_user(username='boss3', password='x', is_staff=True)
+
+    def test_account_requires_login(self):
+        self.assertEqual(self.client.get(reverse('wiki:account')).status_code, 302)
+
+    def test_account_page_shows_profile(self):
+        self.client.force_login(self.kassir)
+        response = self.client.get(reverse('wiki:account'))
+        self.assertContains(response, 'kassir3')
+        self.assertContains(response, 'Сотрудник (чтение)')
+
+    def test_settings_block_only_for_staff(self):
+        self.client.force_login(self.kassir)
+        self.assertNotContains(self.client.get(reverse('wiki:account')), 'Резервная копия базы')
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(reverse('wiki:account')), 'Резервная копия базы')
+
+    def test_db_backup_only_for_staff(self):
+        self.client.force_login(self.kassir)
+        self.assertEqual(self.client.get(reverse('wiki:db_backup')).status_code, 403)
+
+
+class DbBackupDownloadTests(TransactionTestCase):
+    """TransactionTestCase намеренно: TestCase держит открытую транзакцию,
+    а SQLite backup API в чужой открытой транзакции виснет. В проде транзакции нет."""
+
+    def test_db_backup_downloads_file(self):
+        admin = User.objects.create_user(username='boss4', password='x', is_staff=True)
+        self.client.force_login(admin)
+        response = self.client.get(reverse('wiki:db_backup'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('attachment', response['Content-Disposition'])
+        self.assertIn('.sqlite3', response['Content-Disposition'])
+        body = b''.join(response.streaming_content)
+        self.assertTrue(body.startswith(b'SQLite format 3'))
+        self.assertGreater(len(body), 0)
 

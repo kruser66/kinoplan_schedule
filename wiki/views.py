@@ -1,8 +1,65 @@
+import os
+import sqlite3
+import tempfile
+
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db import connection
+from django.http import HttpResponseForbidden, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 
 from wiki.models import Article, Category, Tag
+from wiki.permissions import can_edit
 from wiki.render import render_markdown
+
+
+@login_required
+def account(request):
+    """Профиль + настройки (только staff). Открывается карточкой пользователя в сайдбаре."""
+    return render(request, 'wiki/account.html', {
+        'nav_active': 'account',
+        'db_name': os.path.basename(str(settings.DATABASES['default']['NAME'])),
+        'is_sqlite': settings.DATABASES['default']['ENGINE'].endswith('sqlite3'),
+    })
+
+
+def _chunks_then_delete(path):
+    """Отдаём файл кусками; в конце (или при обрыве) удаляем временный снимок."""
+    try:
+        with open(path, 'rb') as fh:
+            while chunk := fh.read(64 * 1024):
+                yield chunk
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
+
+
+@login_required
+def db_backup(request):
+    """Консистентный снимок всей SQLite-базы через backup API (безопасно при работе gunicorn)."""
+    if not can_edit(request.user):
+        return HttpResponseForbidden('Выгрузку базы может делать только администратор')
+    if not settings.DATABASES['default']['ENGINE'].endswith('sqlite3'):
+        return HttpResponseForbidden('Автовыгрузка настроена только для SQLite')
+
+    connection.ensure_connection()  # connection.connection может быть None, если БД в этом запросе ещё не трогали
+    tmp = tempfile.NamedTemporaryFile(suffix='.sqlite3', delete=False)
+    tmp.close()
+    dst = sqlite3.connect(tmp.name)
+    try:
+        connection.connection.backup(dst)  # «бэкап на горячую», не блокирует записи
+    finally:
+        dst.close()
+
+    filename = f"kzzfun-db-{timezone.localdate():%Y-%m-%d}.sqlite3"
+    response = StreamingHttpResponse(
+        _chunks_then_delete(tmp.name),
+        content_type='application/octet-stream',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['X-Robots-Tag'] = 'noindex'
+    return response
 
 
 @login_required

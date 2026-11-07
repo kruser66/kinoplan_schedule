@@ -34,7 +34,7 @@
   </header>
 
   <div class="wiki-layout">
-    <aside class="wiki-sidebar collapse d-lg-block" id="wikiNav">
+    <aside class="wiki-sidebar collapse d-lg-flex" id="wikiNav">
       <div>
         <div class="wiki-nav-label">Навигация</div>
         <nav class="wiki-nav">
@@ -50,17 +50,15 @@
           {% include 'wiki/_nav_tree.html' with cats=roots %}
         </nav>
       </div>
-      <div class="wiki-user-card">
+      <a class="wiki-user-card" href="{% url 'wiki:account' %}" title="Профиль{% if user.is_staff %} и настройки{% endif %}">
         <span class="wiki-avatar">{{ user.username|first|upper }}</span>
         <span class="who">
           <div class="name">{{ user.get_full_name|default:user.username }}</div>
-          <div class="role">{% if user.is_staff %}Полный доступ{% else %}Только чтение{% endif %}</div>
+          <div class="role">{% if user.is_staff %}Полный доступ ⚙{% else %}Только чтение{% endif %}</div>
         </span>
-        <form action="{% url 'logout' %}" method="POST" title="Выйти">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-wiki-ghost px-2">⎋</button>
-        </form>
-      </div>
+        <span class="wiki-logout" onclick="event.preventDefault(); this.closest('a').nextElementSibling.submit();" title="Выйти">⎋</span>
+      </a>
+      <form action="{% url 'logout' %}" method="POST" class="d-none">{% csrf_token %}</form>
     </aside>
 
     <main class="wiki-main">

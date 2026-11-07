@@ -1,0 +1,43 @@
+{% extends 'wiki/base_wiki.html' %}
+{% block title %}Профиль — База знаний{% endblock %}
+{% block wiki_page %}
+  <div class="wiki-eyebrow">Аккаунт</div>
+  <div class="wiki-page-title-row"><h1>Профиль</h1></div>
+
+  <div class="wiki-article mt-3" style="max-width: 640px;">
+    <table class="table table-sm mb-0" style="max-width: 480px;">
+      <tr><th style="width:40%">Логин</th><td>{{ user.username }}</td></tr>
+      <tr><th>Имя</th><td>{{ user.get_full_name|default:'—' }}</td></tr>
+      <tr><th>Почта</th><td>{{ user.email|default:'—' }}</td></tr>
+      <tr><th>Роль</th><td>{% if user.is_superuser %}Владелец{% elif user.is_staff %}Редактор вики{% else %}Сотрудник (чтение){% endif %}</td></tr>
+      <tr><th>Последний вход</th><td>{{ user.last_login|date:'d.m.Y H:i'|default:'—' }}</td></tr>
+      <tr><th>Аккаунт создан</th><td>{{ user.date_joined|date:'d.m.Y' }}</td></tr>
+    </table>
+    <hr>
+    <a class="btn btn-sm btn-wiki-ghost" href="{% url 'logout' %}" onclick="event.preventDefault(); this.nextElementSibling.submit();">Выйти из аккаунта</a>
+    <form action="{% url 'logout' %}" method="POST" class="d-none">{% csrf_token %}</form>
+  </div>
+
+  {% if user.is_staff %}
+    <div class="wiki-eyebrow mt-4">Для администратора</div>
+    <div class="wiki-page-title-row"><h1>Настройки</h1></div>
+
+    <div class="wiki-article mt-3" style="max-width: 640px;">
+      <h2>Резервная копия базы</h2>
+      <p class="text-secondary">
+        Скачает файл <code>{{ db_name }}</code> — вся база целиком: пользователи, расписания, вики.
+        Снимок делается «на горячую» и не мешает работе сайта. Храните копию на другом носителе.
+      </p>
+      <p class="text-secondary small mb-3">⚠ Картинки расписаний и будущие вложения лежат отдельно в папке <code>media/</code> — при переносе сервера копируйте и её.</p>
+      <a class="btn btn-wiki" href="{% url 'wiki:db_backup' %}">⬇ Сохранить базу данных</a>
+      {% if not is_sqlite %}
+        <p class="text-danger small mt-2">База не SQLite — автовыгрузка недоступна.</p>
+      {% endif %}
+
+      <hr class="my-4">
+      <h2>Администрирование</h2>
+      <p class="text-secondary">Полная админка: статьи, категории, теги, пользователи.</p>
+      <a class="btn btn-wiki-ghost" href="{% url 'admin:index' %}">Открыть админку</a>
+    </div>
+  {% endif %}
+{% endblock %}
