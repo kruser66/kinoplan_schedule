@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}База знаний{% endblock %}
+{% block content %}
+  <div class="h4 pb-2 mb-4 text-success border-bottom border-success">База знаний</div>
+
+  {% if categories %}
+    <div class="mb-4">
+      {% for cat in categories %}
+        <a class="btn btn-outline-success btn-sm me-1" href="{{ cat.get_absolute_url }}">{{ cat.name }} ({{ cat.children_deep_count }})</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="row mb-4 justify-content-center">
+    {% for article in articles %}
+      <div class="col-md-4 mb-3">
+        <div class="card h-100 text-start">
+          <div class="card-body">
+            <div class="text-success small mb-1">{{ article.category.name }} · {{ article.updated_at|date:'d.m.Y' }}</div>
+            <h5 class="card-title"><a class="text-decoration-none" href="{{ article.get_absolute_url }}">{{ article.title }}</a></h5>
+            <p class="card-text text-secondary small">{{ article.excerpt }}</p>
+          </div>
+          <div class="card-footer text-secondary small bg-transparent">
+            ~{{ article.reading_time }} мин {% if article.tags.all %}{% for t in article.tags.all %} #{{ t.name }}{% endfor %}{% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Статей пока нет — загляни в админку :)</p>
+    {% endfor %}
+  </div>
+{% endblock %}

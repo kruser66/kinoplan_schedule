@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{{ article.title }} — База знаний{% endblock %}
+{% block content %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb justify-content-center">
+      <li class="breadcrumb-item"><a href="{% url 'wiki:home' %}">База знаний</a></li>
+      {% for crumb in article.breadcrumbs %}
+        <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
+          {% if forloop.last %}{{ crumb.name }}{% else %}<a href="{{ crumb.get_absolute_url }}">{{ crumb.name }}</a>{% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <div class="mx-auto text-start mb-4" style="max-width: 800px;">
+    <h2 class="text-success">{{ article.title }}</h2>
+    <p class="text-secondary small">
+      {{ article.category.name }} · изменена {{ article.updated_at|date:'d.m.Y H:i' }}
+      {% if article.author %} · автор: {{ article.author.username }}{% endif %}
+      {% for t in article.tags.all %} <span class="badge text-bg-secondary">#{{ t.name }}</span>{% endfor %}
+    </p>
+    <hr>
+    <div class="wiki-body">{{ body_html|safe }}</div>
+    {% if user.is_staff %}
+  <hr>
+  <a class="btn btn-outline-success btn-sm" href="{% url 'admin:wiki_article_change' article.id %}">✏️ Редактировать (админка)</a>
+{% endif %}
+  </div>
+{% endblock %}
